@@ -5,7 +5,7 @@
 !.gitignore
 !*.hdl
 !*.clj
-!.asm
+!*test.asm
 
 # ...even if they are in subdirectories
 !*/
