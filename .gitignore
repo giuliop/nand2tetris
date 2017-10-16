@@ -1,0 +1,14 @@
+gnore everything
+*
+
+# But not these files...
+!.gitignore
+!*.hdl
+!*.clj
+!.asm
+
+# ...even if they are in subdirectories
+!*/
+
+# ... but ignore this
+/projects/06/assembler/.gitignore
