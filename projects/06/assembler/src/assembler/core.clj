@@ -40,17 +40,13 @@
        (get table/dest-codes (:dest line))
        (get table/jump-codes (:jump line))))
 
-(defn line-to-binary-with [table]
-  "Returns a function that takes a pre-processed asm line and translates it to
-  binary with the supplied table"
-  (fn [line]
-    (if (parse/is-a-instruction line) (a-line-to-binary line table)
-      (c-line-to-binary line))))
-
 (defn translate [pre-processed-lines table]
   "Take an asm program split into lines with whitespaces already removed and
   a symbol table with labels already added and translate it to a binary program"
-  (map (line-to-binary-with table) pre-processed-lines))
+  (let [f (fn [line]
+            (if (parse/is-a-instruction line) (a-line-to-binary line table)
+              (c-line-to-binary line)))]
+    (map f pre-processed-lines)))
 
 (defn name-file [file]
   "Change the suffix of file to .hack"
