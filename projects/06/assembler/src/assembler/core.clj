@@ -32,11 +32,12 @@
 
 (defn a-line-to-binary [line table]
 "Takes an pre-prcessed a-instruction and converts it to binary with the input table"
-  (if (not-empty (:a-value line)) (to-binary-16 (:a-value line))
-    (to-binary-16 (get table (:a-var line)))))
+  (if (not-empty (:a-value line)) (to-binary-16 (bigdec (:a-value line)))
+    (to-binary-16 (bigdec (get table (:a-var line))))))
 
 (defn c-line-to-binary [line]
-  (str (get table/comp-codes (:comp line))
+  (str "111"
+       (get table/comp-codes (:comp line))
        (get table/dest-codes (:dest line))
        (get table/jump-codes (:jump line))))
 
@@ -56,7 +57,7 @@
 
 (defn write-file [file lines]
   "Take a filename and a seq of lines and writes them to disk"
-  (with-open [w (clojure.java.writer file)]
+  (with-open [w (clojure.java.io/writer file)]
     (doseq [line lines] (.write w line) (.newLine w))))
 
 (defn assemble [file]
@@ -70,17 +71,27 @@
 (deftest name-file-test
   (is (= "ciao.hack" (name-file "ciao.asm")))
   (is (= "ciao.hack" (name-file "ciao")))
-  (is (= "ciao.hello.hack" (name-file "ciao.hello.asm")))
-)
+  (is (= "ciao.hello.hack" (name-file "ciao.hello.asm"))))
 
 (deftest pre-process-test
   (let [table (assoc table/predefined "OUTPUT_FIRST" 10
                                       "OUTPUT_D" 12
                                       "INFINITE_LOOP" 14)
-        asm (slurp "src/assembler/test.asm")
-        processed-asm (slurp "src/assembler/pre_processed_test.asm")]
-    (is (= (str/split-lines processed-asm)
-           (map :instr (first (pre-process asm)))))
-    (is (= table
-          (second (pre-process asm))))))
+        asm (slurp "src/assembler/test_files/test.asm")
+        processed-asm (slurp "src/assembler/test_files/pre_processed_test.asm")]
+    (is (= (str/split-lines processed-asm) (map :instr (first (pre-process asm)))))
+    (is (= table (second (pre-process asm))))))
 
+(deftest a-line-to-binary-test
+  (is (= "0000001111100111" (a-line-to-binary (parse/tokenize "@999")
+                                              table/predefined)))
+  (is (= "0000001111100111" (a-line-to-binary (parse/tokenize "@var")
+                                              {"var" "999"}))))
+
+(deftest c-line-to-binary-test
+  (is (= "1111110111011000" (c-line-to-binary (parse/tokenize "MD=M+1")))))
+
+(deftest assemble-test
+  (assemble "src/assembler/test_files/Add.asm")
+  (is (= (slurp "src/assembler/test_files/Add.hack")
+         (slurp "src/assembler/test_files/orig_Add.hack"))))
