@@ -23,7 +23,9 @@
    "THIS" 3
    "THAT" 4
    "SCREEN" 16384
-   "KEYBOARD" 24576})
+   "KEYBOARD" 24576
+   :next 16 ; next represents the next available memory address
+   })
 
 (def comp-codes
   {"0"   "0101010"

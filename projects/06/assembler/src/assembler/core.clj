@@ -5,20 +5,18 @@
             [clojure.test :refer :all]))
 
 (defn add-labels [processed-lines]
-  "Takes asm processed lines and returns an augmented predefined table with the
-  labels added"
+  "Takes asm processed lines and returns an augmented predefined table with labels"
   (let [acc {:table table/predefined, :line-num 0}
         f (fn [acc line]
-            (if-let [label (:label line)]
-              (assoc-in acc [:table label] (:line-num acc))
-              (if-not (parse/is-empty line)
-                (update acc :line-num inc)
-                acc)))]
+            (let [label (:label line)]
+              (cond label (assoc-in acc [:table label] (:line-num acc))
+                    (parse/is-empty line) acc
+                    :else (update acc :line-num inc))))]
     (:table (reduce f acc processed-lines))))
 
 (defn pre-process [asm]
-  "Take an asm program, removes whitespaces/comments, create a symbol table adding
-  labels to the predefined table; return [processed-lines, table]"
+  "Takes an asm program as a string, removes whitespaces/comments, creates a symbol
+  table adding labels to the predefined table; returns [pre-processed-lines, table]"
   (let [processed-lines (map parse/tokenize (str/split-lines asm))
         table (add-labels processed-lines)]
     [(remove parse/is-empty processed-lines) table]))
@@ -41,13 +39,24 @@
        (get table/dest-codes (:dest line))
        (get table/jump-codes (:jump line))))
 
+(defn add-var [table a-var-token]
+  "Takes a table and the a-var token of a line, checks if the a-var token does
+  contain a var and if so adds it to the table if not already present"
+  (cond (nil? a-var-token) table
+        (contains? table a-var-token) table
+        :else (-> (assoc table a-var-token (:next table))
+                  (update :next inc))))
+
 (defn translate [pre-processed-lines table]
-  "Take an asm program split into lines with whitespaces already removed and
-  a symbol table with labels already added and translate it to a binary program"
-  (let [f (fn [line]
-            (if (parse/is-a-instruction line) (a-line-to-binary line table)
-              (c-line-to-binary line)))]
-    (map f pre-processed-lines)))
+  "Takes pre-processed asm lines and a symbol table and outputs binary lines"
+  (let [acc {:table table, :lines []}
+        f (fn [{:keys [table lines] :as acc} line]
+            (if (parse/is-c-instruction line)
+              (update acc :lines conj (c-line-to-binary line))
+              (let [table (add-var table (:a-var line))
+                    lines (conj lines (a-line-to-binary line table))]
+                {:table table, :lines lines})))]
+    (:lines (reduce f acc pre-processed-lines))))
 
 (defn name-file [file]
   "Change the suffix of file to .hack"
@@ -56,16 +65,15 @@
       (str radix "hack"))))
 
 (defn write-file [file lines]
-  "Take a filename and a seq of lines and writes them to disk"
+  "Takes a filename and a seq of lines and writes them to disk"
   (with-open [w (clojure.java.io/writer file)]
     (doseq [line lines] (.write w line) (.newLine w))))
 
 (defn assemble [file]
-  "Take an input assembly file .asm and output the assembled binary code in a .hack
-  file"
+  "Takes an assembly file and outputs the binary code in a same name .hack file"
   (let [asm (slurp file)
-        [pre-processed-asm, table] (pre-process asm)]
-    (write-file (name-file file) (translate pre-processed-asm table))))
+        [lines, symbol-table] (pre-process asm)]
+    (write-file (name-file file) (translate lines symbol-table))))
 
 ;;; TESTING ;;;
 (deftest name-file-test
@@ -92,6 +100,7 @@
   (is (= "1111110111011000" (c-line-to-binary (parse/tokenize "MD=M+1")))))
 
 (deftest assemble-test
-  (assemble "src/assembler/test_files/Add.asm")
-  (is (= (slurp "src/assembler/test_files/Add.hack")
-         (slurp "src/assembler/test_files/orig_Add.hack"))))
+  (doseq [file ["Add", "Max", "Pong", "Rect"]]
+    (assemble (str "src/assembler/test_files/" file ".asm"))
+    (is (= (slurp (str "src/assembler/test_files/" file ".hack"))
+           (slurp (str "src/assembler/test_files/orig_" file ".hack"))))))

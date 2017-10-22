@@ -2,16 +2,17 @@
   (:require [clojure.string :as str]
             [clojure.test :refer :all]))
 
+(def re-without-comment #"([^//]*)(?://.*)?")
 (def re-label #"^\((\S*)\)")
 (def re-a-var #"^@([a-zA-Z_.$:][a-zA-Z_.$:\d]*)")
 (def re-a-value #"^@(\d*)")
-(def re-dest #"^([AMD]+)(?==)")
-(def re-jump #"((?<=;)J[GELNM][TQEP])")
-(def re-comp #"(?:.*=)?([^;]+).*")
+(def re-dest #"^([AMD]+)(?==).*")
+(def re-jump #"[^;]+;(J[GELNM][TQEP])")
+(def re-comp #"(?!@)(?:.*=)?([^;]+)(?:;.*)?")
 
 (defn remove-whitespace [line]
   "Takes a line, removes comments and leading/trailing whitespaces"
-  (->> (re-find #"([^//]*)" line)
+  (->> (re-matches re-without-comment line)
        (last)
        (str "")
        (str/trim)))
@@ -28,16 +29,16 @@
   :jump (a string with the jump field of the c instruction if there or nil)
   "
   (let [line (remove-whitespace line)
-        label (last (re-find re-label line))
-        i-type (if (= "@" (first line)) "a" "c") ]
+        label (last (re-matches re-label line))
+        i-type (if (= \@ (first line)) "a" "c") ]
     {:label label
      :instr (if label "" line)
      :type i-type
-     :a-value (last (re-find re-a-value line))
-     :a-var (last (re-find re-a-var line))
-     :comp (last (re-find re-comp line))
-     :dest (last (re-find re-dest line))
-     :jump (last (re-find re-jump line))
+     :a-value (last (re-matches re-a-value line))
+     :a-var (last (re-matches re-a-var line))
+     :comp (last (re-matches re-comp line))
+     :dest (last (re-matches re-dest line))
+     :jump (last (re-matches re-jump line))
      }))
 
 (defn is-empty [pre-processed-line]
@@ -52,5 +53,10 @@
 
 ;; TESTING ;;;
 (deftest tokenize-test
+  (is (= {:label nil, :instr "@999", :type "a", :a-value "999", :a-var nil,
+          :comp nil, :dest nil, :jump nil} (tokenize "@999")))
   (is (= {:label nil, :instr "MD=M+1", :type "c", :a-value nil, :a-var nil,
-          :comp "M+1", :dest "MD", :jump nil} (tokenize "MD=M+1"))))
+          :comp "M+1", :dest "MD", :jump nil} (tokenize "MD=M+1")))
+  (is (= {:label nil, :instr "D;JGT", :type "c", :a-value nil, :a-var nil,
+          :comp "D", :dest nil, :jump "JGT"} (tokenize "D;JGT"))))
+
