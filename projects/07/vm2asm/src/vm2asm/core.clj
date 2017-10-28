@@ -36,7 +36,7 @@
   (with-open [w (clojure.java.io/writer file)]
     (doseq [line lines
           :when (not (empty? line))]
-      (.write w line) (.newLine w))))
+      (.write w line))))
 
 (defn vm-to-asm [file]
   "Takes a .vm file and outputs the assembly code in a same name .asm file"
