@@ -123,6 +123,21 @@
                 PUSH-D
                 "(" continue-label ")" "\n"))))
 
+(defn build-label [label-name filename]
+  (str filename "_" label-name))
+
+(defn label [arg1 filename]
+    (str "(" (build-label arg1 filename) ")" "\n"))
+
+(defn goto [arg1 filename]
+  (str "@" (build-label arg1 filename) "\n"
+       "0;JMP" "\n"))
+
+(defn if-goto [arg1 filename]
+  (str (POP-DA "D")
+       "@" (build-label arg1 filename) "\n"
+       "D;JNE" "\n"))
+
 (def commands {"push" push
                "pop" pop-
                "add" (binary-op "+")
@@ -134,6 +149,9 @@
                "eq" (test-op "=")
                "gt" (test-op ">")
                "lt" (test-op "<")
+               "label" label
+               "goto" goto
+               "if-goto" if-goto
                nil #(str)
                })
 

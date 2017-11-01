@@ -6,7 +6,7 @@
 (def re-vm-line #"^(\S*)\s*(\S*)\s*(\S*)")
 
 (def valid-commands ["add" "sub" "neg" "eq" "gt" "lt" "and" "or" "not"
-               "pop" "push"])
+               "pop" "push" "label" "goto" "if-goto"])
 
 (defn remove-whitespace [line]
   "Takes a line, removes comments and leading/trailing whitespaces"

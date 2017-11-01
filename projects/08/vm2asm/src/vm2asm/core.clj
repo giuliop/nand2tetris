@@ -5,20 +5,12 @@
             [vm2asm.table :as table]
             ))
 
-(def test_dir "./src/vm2asm/test_files")
-
-;(defn translate-to-asm [vm-lines]
-  ;"Takes a seq of vm lines and translate them to asm lines"
-  ;(let [acc [[] config]
-        ;f (fn [acc line] ())]
-    ;(first (reduce f acc vm-lines))))
-
 (defn translate-f [filename vm-line]
   "Takes a vm string and returns its translation into an asm string"
   (let [{:keys [cmd arg1 arg2]} (parse/tokenize vm-line)
         cmd-f (get table/commands cmd)]
     (cond arg2 (cmd-f arg1 arg2 filename)
-          arg1 (cmd-f arg1)
+          arg1 (cmd-f arg1 filename)
           :else (cmd-f))))
 
 (defn translate-to-asm [filename vm-lines]
@@ -32,7 +24,6 @@
 
 (defn write-file [filename lines]
   "Takes a filename and a seq of lines and writes them to disk"
-  ;lines)
   (with-open [w (clojure.java.io/writer filename)]
     (doseq [line lines
           :when (not (empty? line))]
