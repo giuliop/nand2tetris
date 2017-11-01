@@ -11,4 +11,4 @@
 !*/
 
 # ... but ignore this
-/projects/06/assembler/.gitignore
+/projects/**/.gitignore
