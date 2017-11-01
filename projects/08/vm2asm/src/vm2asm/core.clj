@@ -9,6 +9,7 @@
   "Takes a vm string and returns its translation into an asm string"
   (let [{:keys [cmd arg1 arg2]} (parse/tokenize vm-line)
         cmd-f (get table/commands cmd)]
+    ;(println [cmd arg1 arg2])
     (cond arg2 (cmd-f arg1 arg2 filename)
           arg1 (cmd-f arg1 filename)
           :else (cmd-f))))

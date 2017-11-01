@@ -16,15 +16,29 @@
                  "M=D" "\n"
                  SP++))
 
+(defn LOAD-D [n]
+  (str "@" n "\n"
+       "D=A" "\n"))
+
+(defn COPY [from to]
+  (str "@" from "\n"
+       "D=M" "\n"
+       "@" to "\n"
+       "M=D" "\n"))
+
+(defn COPY-WITH-NEG-OFFSET [from offset to]
+  ( str "@" offset "\n"
+        "D=A" "\n"
+        "@" from
+        "D=A-D" "\n"
+        "@" to
+        "M=D" "\n"))
+
 (defn POP-DA [D-or-A]
   (str SP--
        "@SP" "\n"
        "A=M" "\n"
        D-or-A "=M" "\n"))
-
-(defn LOAD-D [n]
-  (str "@" n "\n"
-       "D=A" "\n"))
 
 (defn POP- [reg arg2]
   (str (LOAD-D arg2)
@@ -126,6 +140,7 @@
 (defn build-label [label-name filename]
   (str filename "_" label-name))
 
+*** wrong, need to use funcion name, not filename ***
 (defn label [arg1 filename]
     (str "(" (build-label arg1 filename) ")" "\n"))
 
@@ -137,6 +152,29 @@
   (str (POP-DA "D")
        "@" (build-label arg1 filename) "\n"
        "D;JNE" "\n"))
+
+(defn function [func-name num-locals filename]
+  (str "(" func-name ")" "\n"
+       "D=0" "\n"
+       (apply str (repeat (bigdec num-locals) PUSH-D))))
+
+(defn return []
+  (let [FRAME "R13"
+        RET "R14"]
+    (str (COPY "LCL" FRAME)
+         (COPY-WITH-NEG-OFFSET FRAME 5 RET)
+         (POP- "ARG" 0)
+         "@ARG" "\n"  ; make SP=ARG+1
+         "D=M" "\n"   ;
+         "D=D+1" "\n" ;
+         "@SP" "\n"   ;
+         "M=D" "\n"   ; SP=ARG+!
+         (COPY-WITH-NEG-OFFSET FRAME 1 "THAT")
+         (COPY-WITH-NEG-OFFSET FRAME 2 "THIS")
+         (COPY-WITH-NEG-OFFSET FRAME 3 "ARG")
+         (COPY-WITH-NEG-OFFSET FRAME 4 "LCL")
+         "@RET" "\n"
+         "0;JMP" "\n")))
 
 (def commands {"push" push
                "pop" pop-
@@ -152,6 +190,9 @@
                "label" label
                "goto" goto
                "if-goto" if-goto
+               "function" function
+               ;"call" call
+               "return" return
                nil #(str)
                })
 
