@@ -28,6 +28,17 @@
      :arg2 (if-not (empty? arg2) arg2 nil)
      }))
 
+(defn functions-from-file [file-name]
+  "Takes a filename, opens it and returns a collection of all the funtions in it
+  as maps {:file-name :func-name :vm-lines}"
+  (let [func-dict (fn [func-string]
+                    {:file-name file-name
+                     :func-name (last (re-find #"[^\\n]function (\S*)" func-string))
+                     :vm-lines func-string})]
+    (->> (slurp file-name)
+         (re-seq #"(?s)(?:\n|\A)function.*?(?=\nfunction|\z)")
+         (map func-dict))))
+
 ; TESTING ;;;
 (deftest tokenize-test
   (is (= {:cmd nil :arg1 nil :arg2 nil} (tokenize "")))

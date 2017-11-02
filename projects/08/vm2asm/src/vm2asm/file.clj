@@ -23,12 +23,10 @@
 (defn list-vm-files [file-or-dir]
   "If given a file name returns it if it is a .vm file, if given a
   directory name returns the names of all the .vm files in it"
-  (let [res []]
-    (when (.exists (io/file file-or-dir))
-      (if (.isDirectory (io/file file-or-dir))
-        (into res (filter vm-file? (.list (io/file file-or-dir))))
-        (when (vm-file? file-or-dir) (into res file-or-dir))))))
-
+  (when (.exists (io/file file-or-dir))
+    (if (.isDirectory (io/file file-or-dir))
+      (filter vm-file? (.list (io/file file-or-dir)))
+      (when (vm-file? file-or-dir) (into [] file-or-dir))))))
 
 (defn radix [filename]
   "Takes a filename and remove directory path and extension"

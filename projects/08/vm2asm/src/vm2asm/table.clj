@@ -58,12 +58,12 @@
          "@" reg "\n"
          "M=D" "\n")))
 
-(defn POP-STATIC [arg2 filename]
+(defn POP-STATIC [arg2 file-name]
   (str (POP-DA "D")
-       "@" filename "." arg2 "\n"
+       "@" file-name "." arg2 "\n"
        "M=D" "\n"))
 
-(defn pop- [arg1 arg2 filename]
+(defn pop- [arg1 arg2 meta-data]
   (case arg1
     "argument" (POP- "ARG" arg2)
     "local" (POP- "LCL" arg2)
@@ -71,7 +71,7 @@
     "that" (POP- "THAT" arg2)
     "temp" (POP- "R5" arg2)
     "pointer" (POP-POINTER arg2)
-    "static" (POP-STATIC arg2 filename)
+    "static" (POP-STATIC arg2 (:file-name meta-data))
     ))
 
 (defn PUSH- [reg arg2]
@@ -88,12 +88,12 @@
          "D=M" "\n"
          PUSH-D)))
 
-(defn PUSH-STATIC [arg2 filename]
-  (str "@" filename "." arg2 "\n"
+(defn PUSH-STATIC [arg2 file-name]
+  (str "@" file-name "." arg2 "\n"
        "D=M" "\n"
        PUSH-D))
 
-(defn push [arg1 arg2 filename]
+(defn push [arg1 arg2 meta-data]
   (case arg1
     "constant" (str (LOAD-D arg2) PUSH-D)
     "argument" (PUSH- "ARG" arg2)
@@ -102,7 +102,7 @@
     "that" (PUSH- "THAT" arg2)
     "temp" (PUSH- "R5" arg2)
     "pointer" (PUSH-POINTER arg2)
-    "static" (PUSH-STATIC arg2 filename)
+    "static" (PUSH-STATIC arg2 (:file-name meta-data))
     ))
 
 (defn binary-op [op]
@@ -137,23 +137,22 @@
                 PUSH-D
                 "(" continue-label ")" "\n"))))
 
-(defn build-label [label-name filename]
-  (str filename "_" label-name))
+(defn build-label [label-name meta-data]
+  (str (:func-name meta-data) "$" label-name))
 
-*** wrong, need to use funcion name, not filename ***
-(defn label [arg1 filename]
-    (str "(" (build-label arg1 filename) ")" "\n"))
+(defn label [arg1 meta-data]
+    (str "(" (build-label arg1 meta-data) ")" "\n"))
 
-(defn goto [arg1 filename]
-  (str "@" (build-label arg1 filename) "\n"
+(defn goto [arg1 meta-data]
+  (str "@" (build-label arg1 meta-data) "\n"
        "0;JMP" "\n"))
 
-(defn if-goto [arg1 filename]
+(defn if-goto [arg1 meta-data]
   (str (POP-DA "D")
-       "@" (build-label arg1 filename) "\n"
+       "@" (build-label arg1 meta-data) "\n"
        "D;JNE" "\n"))
 
-(defn function [func-name num-locals filename]
+(defn function [func-name num-locals meta-data]
   (str "(" func-name ")" "\n"
        "D=0" "\n"
        (apply str (repeat (bigdec num-locals) PUSH-D))))
@@ -176,6 +175,8 @@
          "@RET" "\n"
          "0;JMP" "\n")))
 
+*** implement call and init code ***
+
 (def commands {"push" push
                "pop" pop-
                "add" (binary-op "+")
@@ -191,7 +192,7 @@
                "goto" goto
                "if-goto" if-goto
                "function" function
-               ;"call" call
+               "call" call
                "return" return
                nil #(str)
                })
