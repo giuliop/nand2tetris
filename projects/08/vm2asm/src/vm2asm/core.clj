@@ -1,50 +1,30 @@
 (ns vm2asm.core
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
+            [vm2asm.file :as file]
             [vm2asm.parse :as parse]
-            [vm2asm.table :as table]
-            ))
+            [vm2asm.table :as table]))
 
-(defn translate-f [filename vm-line]
-  "Takes a vm string and returns its translation into an asm string"
-  (let [{:keys [cmd arg1 arg2]} (parse/tokenize vm-line)
+(defn translate-line [meta-data vm-line]
+  "Takes a vm string and meta-data with file-name and function-name and
+  returns its translation into an asm string"
+  (let [{:keys [func-name file-name]} meta-data
+        {:keys [cmd arg1 arg2]} (parse/tokenize vm-line)
         cmd-f (get table/commands cmd)]
-    ;(println [cmd arg1 arg2])
-    (cond arg2 (cmd-f arg1 arg2 filename)
-          arg1 (cmd-f arg1 filename)
+    (cond arg2 (cmd-f arg1 arg2 meta-data)
+          arg1 (cmd-f arg1 meta-data)
           :else (cmd-f))))
 
-(defn translate-to-asm [filename vm-lines]
-  (conj (map (partial translate-f filename) vm-lines) table/init))
+(defn translate-function [vm-function]
+  (let [{:keys [func-name file-name vm-lines]} vm-func]
+    (conj (map (partial translate-line (dissoc vm-func :vm-lines) vm-lines)
+          table/init-code)))
 
-(defn rename-to-asm [filename]
-  "Change the suffix of file to .asm"
-  (let [radix (re-find #".*\." filename)]
-    (if (nil? radix) (str filename ".asm")
-      (str radix "asm"))))
+(defn vm-to-asm [file-or-dir]
+  "Takes a directory containing .vm files (or a single .vm file) and outputs
+  a single .asm file names as the dir (or the file)"
+  (->> (file/list-vm-files file-or-dir)
+       (map (parse/functions-from-file)
+       (map translate-function)
+       (file/write (file/rename-to-asm file-or-dir)))))
 
-(defn write-file [filename lines]
-  "Takes a filename and a seq of lines and writes them to disk"
-  (with-open [w (clojure.java.io/writer filename)]
-    (doseq [line lines
-          :when (not (empty? line))]
-      (.write w line))))
-
-(defn radix [filename]
-  "Takes a filename and remove directory path and extension"
-  (let [radix (last (re-matches #"^(?:.*/)?(.*?)(?:\.[^.]*$)?" filename))]
-    radix))
-
-(defn vm-to-asm [filename]
-  "Takes a .vm file and outputs the assembly code in a same name .asm file"
-  (->> (slurp filename)
-       (str/split-lines)
-       (translate-to-asm (radix filename))
-       (write-file (rename-to-asm filename))))
-
-(deftest radix-test
-  (is (= "radix" (radix "radix")))
-  (is (= "radix" (radix "../dir1/dir2/dir3/radix")))
-  (is (= "radix" (radix "../dir1/dir2/dir3/radix.")))
-  (is (= "radix" (radix "../dir1/dir2/dir3/radix.ext")))
-  (is (= "radix.notext" (radix "../dir1/dir2/dir3/radix.notext.ext"))))

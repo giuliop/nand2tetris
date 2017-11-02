@@ -1,6 +1,6 @@
 (ns vm2asm.table)
 
-(def init (str "@256" "\n" ; stack pointer init'ed to memory address 256
+(def init-code (str "@256" "\n" ; stack pointer init'ed to memory address 256
                "D=A" "\n"
                "@SP" "\n"
                "M=D" "\n"))
