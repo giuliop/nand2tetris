@@ -1,9 +1,15 @@
 (ns vm2asm.table)
 
-(def init-code (str "@256" "\n" ; stack pointer init'ed to memory address 256
-               "D=A" "\n"
-               "@SP" "\n"
-               "M=D" "\n"))
+(def init-code
+ "Initialization code to append at the beginning of the asm file; it does:
+ * init stack pointer SP to memory address 256
+ * call the function Sys.init "
+ (str "@256" "\n"
+      "D=A" "\n"
+      "@SP" "\n"
+      "M=D" "\n" ; init SP
+      "@Sys.init" "\n"
+      "0;JMP" "\n"))
 
 (def SP++ (str "@SP"   "\n"
                "M=M+1" "\n"))
@@ -20,19 +26,21 @@
   (str "@" n "\n"
        "D=A" "\n"))
 
-(defn COPY [from to]
-  (str "@" from "\n"
+(defn COPY [from-M to-M]
+  "Copies the content of from-M to to-M"
+  (str "@" from-M "\n"
        "D=M" "\n"
-       "@" to "\n"
+       "@" to-M "\n"
        "M=D" "\n"))
 
-(defn COPY-WITH-NEG-OFFSET [from offset to]
-  ( str "@" offset "\n"
-        "D=A" "\n"
-        "@" from
-        "D=A-D" "\n"
-        "@" to
-        "M=D" "\n"))
+(defn COPY-WITH-NEG-OFFSET [from-M offset to-M]
+  "Copies the content of from-M minus offset to to-M"
+  (str "@" offset "\n"
+       "D=A" "\n"
+       "@" from-M
+       "D=A-D" "\n"
+       "@" to-M
+       "M=D" "\n"))
 
 (defn POP-DA [D-or-A]
   (str SP--
@@ -93,6 +101,12 @@
        "D=M" "\n"
        PUSH-D))
 
+(defn PUSH-M [M]
+  "Pushes the content of M to the stack"
+  (str "@" M "\n"
+       "D=M" "\n"
+       PUSH-D))
+
 (defn push [arg1 arg2 meta-data]
   (case arg1
     "constant" (str (LOAD-D arg2) PUSH-D)
@@ -137,23 +151,26 @@
                 PUSH-D
                 "(" continue-label ")" "\n"))))
 
-(defn build-label [label-name meta-data]
+(defn build-function-label [called-f]
+  (str "(" called-f ")" "\n"))
+
+(defn build-internal-label [label-name meta-data]
   (str (:func-name meta-data) "$" label-name))
 
 (defn label [arg1 meta-data]
-    (str "(" (build-label arg1 meta-data) ")" "\n"))
+    (str "(" (build-internal-label arg1 meta-data) ")" "\n"))
 
 (defn goto [arg1 meta-data]
-  (str "@" (build-label arg1 meta-data) "\n"
+  (str "@" (build-internal-label arg1 meta-data) "\n"
        "0;JMP" "\n"))
 
 (defn if-goto [arg1 meta-data]
   (str (POP-DA "D")
-       "@" (build-label arg1 meta-data) "\n"
+       "@" (build-internal-label arg1 meta-data) "\n"
        "D;JNE" "\n"))
 
 (defn function [func-name num-locals meta-data]
-  (str "(" func-name ")" "\n"
+  (str (build-function-label func-name)
        "D=0" "\n"
        (apply str (repeat (bigdec num-locals) PUSH-D))))
 
@@ -175,7 +192,18 @@
          "@RET" "\n"
          "0;JMP" "\n")))
 
-*** implement call and init code ***
+(defn call [called-f num-args meta-data]
+  (let [return-address (str (gensym (:func-name meta-data)))]
+    (str (LOAD-D return-address) PUSH-D
+         (PUSH-M "LCL")
+         (PUSH-M "ARG")
+         (PUSH-M "THIS")
+         (PUSH-M "THAT")
+         (COPY-WITH-NEG-OFFSET "SP" (+ 5 num-args) "ARG")
+         (COPY "SP" "LCL")
+         "@" (build-function-label called-f) "\n"
+         "0;JMP" "\n"
+         "(" return-address ")" "\n")))
 
 (def commands {"push" push
                "pop" pop-
