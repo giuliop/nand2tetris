@@ -37,9 +37,9 @@
   "Copies the content of from-M minus offset to to-M"
   (str "@" offset "\n"
        "D=A" "\n"
-       "@" from-M
+       "@" from-M "\n"
        "D=A-D" "\n"
-       "@" to-M
+       "@" to-M "\n"
        "M=D" "\n"))
 
 (defn POP-DA [D-or-A]

@@ -33,12 +33,16 @@
   as maps {:file-name :func-name :vm-lines}"
   (let [func-dict (fn [func-string]
                     {:file-name file-name
-                     :func-name (last (re-find #"[^\\n]function (\S*)" func-string))
+                     :func-name (last (re-find #"(?:^|\n)function (\S*)" func-string))
                      :vm-lines (str/split-lines func-string)})]
     (->> (slurp file-name)
          (re-seq #"(?s)(?:\n|\A)function.*?(?=\nfunction|\z)")
          (map func-dict))))
 
+  (defn f [func-string]
+                    {:file-name "name"
+                     :func-name (last (re-find #"(?:^|\n)function (\S*)" func-string))
+                     :vm-lines (str/split-lines func-string)})
 ; TESTING ;;;
 (deftest tokenize-test
   (is (= {:cmd nil :arg1 nil :arg2 nil} (tokenize "")))
