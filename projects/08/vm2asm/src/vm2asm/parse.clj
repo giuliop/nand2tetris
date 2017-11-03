@@ -34,7 +34,7 @@
   (let [func-dict (fn [func-string]
                     {:file-name file-name
                      :func-name (last (re-find #"[^\\n]function (\S*)" func-string))
-                     :vm-lines func-string})]
+                     :vm-lines (str/split-lines func-string)})]
     (->> (slurp file-name)
          (re-seq #"(?s)(?:\n|\A)function.*?(?=\nfunction|\z)")
          (map func-dict))))
