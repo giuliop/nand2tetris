@@ -4,6 +4,7 @@
  "Initialization code to append at the beginning of the asm file; it does:
  * init stack pointer SP to memory address 256
  * call the function Sys.init "
+ ;"")
  (str "@256" "\n"
       "D=A" "\n"
       "@SP" "\n"
@@ -34,11 +35,12 @@
        "M=D" "\n"))
 
 (defn COPY-WITH-NEG-OFFSET [from-M offset to-M]
-  "Copies the content of from-M minus offset to to-M"
+  "Copies the content of memory address in from-M offsetted by offset into to-M"
   (str "@" offset "\n"
        "D=A" "\n"
        "@" from-M "\n"
-       "D=A-D" "\n"
+       "A=M-D" "\n"
+       "D=M" "\n"
        "@" to-M "\n"
        "M=D" "\n"))
 
@@ -138,7 +140,7 @@
                true-label (gensym "true")
                continue-label (gensym "continue")]
            (str (POP-DA "D")
-                (POP- "A")
+                (POP-DA "A")
                 "D=A-D" "\n"
                 "@" true-label "\n"
                 "D;" asm-op "\n"
@@ -175,8 +177,8 @@
        (apply str (repeat (bigdec num-locals) PUSH-D))))
 
 (defn return []
-  (let [FRAME "R13"
-        RET "R14"]
+  (let [FRAME "R14"
+        RET "R15"]
     (str (COPY "LCL" FRAME)
          (COPY-WITH-NEG-OFFSET FRAME 5 RET)
          (POP- "ARG" 0)
@@ -199,7 +201,7 @@
          (PUSH-M "ARG")
          (PUSH-M "THIS")
          (PUSH-M "THAT")
-         (COPY-WITH-NEG-OFFSET "SP" (+ 5 num-args) "ARG")
+         (COPY-WITH-NEG-OFFSET "SP" (+ 5 (bigdec num-args)) "ARG")
          (COPY "SP" "LCL")
          "@" (build-function-label called-f) "\n"
          "0;JMP" "\n"
