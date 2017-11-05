@@ -4,12 +4,11 @@
 ; * init stack pointer SP to memory address 256
 ; * call the function Sys.init"
 (def init-code
- (str "@261" "\n"
+ (str "@256" "\n"
       "D=A" "\n"
       "@SP" "\n"
       "M=D" "\n" ; init SP
-      "@Sys.init" "\n"
-      "0;JMP" "\n"))
+      (call "Sys.init" 0 {})))
 
 (def SP++ (str "@SP"   "\n"
                "M=M+1" "\n"))
