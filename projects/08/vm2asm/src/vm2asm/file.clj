@@ -29,9 +29,11 @@
              (add-path-to-filename file-or-dir-name (str lastdir ".asm"))
           :else (str file-or-dir-name ".asm"))))
 
-
 (defn add-path-to-filename [path file-name]
     (str (add-slash-dir path) file-name))
+
+(defn remove-path-form-filename [file-name]
+  (last (re-find #"([^/]*.vm)$" file-name)))
 
 (defn list-vm-files [file-or-dir-name]
   "If given a file name returns it if it is a .vm file, if given a

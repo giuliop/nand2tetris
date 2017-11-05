@@ -1,5 +1,6 @@
 (ns vm2asm.parse
   (:require [clojure.test :refer :all]
+            [vm2asm.file :as file]
             [clojure.string :as str]))
 
 (def re-without-comment #"([^//]*)(?://.*)?")
@@ -32,7 +33,7 @@
   "Takes a filename, opens it and returns a collection of all the funtions in it
   as maps {:file-name :func-name :vm-lines}"
   (let [func-dict (fn [func-string]
-                    {:file-name file-name
+                    {:file-name (file/remove-path-form-filename file-name)
                      :func-name (last (re-find #"(?:^|\n)function (\S*)" func-string))
                      :vm-lines (str/split-lines func-string)})]
     (->> (slurp file-name)

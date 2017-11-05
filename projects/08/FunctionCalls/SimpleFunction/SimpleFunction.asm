@@ -1,9 +1,3 @@
-@256
-D=A
-@SP
-M=D
-@Sys.init
-0;JMP
 (SimpleFunction.test)
 D=0
 @SP

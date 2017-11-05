@@ -1,11 +1,10 @@
 (ns vm2asm.table)
 
+; "Initialization code to append at the beginning of the asm file; it does:
+; * init stack pointer SP to memory address 256
+; * call the function Sys.init"
 (def init-code
- "Initialization code to append at the beginning of the asm file; it does:
- * init stack pointer SP to memory address 256
- * call the function Sys.init "
- ;"")
- (str "@256" "\n"
+ (str "@261" "\n"
       "D=A" "\n"
       "@SP" "\n"
       "M=D" "\n" ; init SP
@@ -35,7 +34,7 @@
        "M=D" "\n"))
 
 (defn COPY-WITH-NEG-OFFSET [from-M offset to-M]
-  "Copies the content of memory address in from-M offsetted by offset into to-M"
+  "Copies content of (content in from-M - offset) into to-M"
   (str "@" offset "\n"
        "D=A" "\n"
        "@" from-M "\n"
@@ -55,10 +54,10 @@
        "@" reg "\n"
        (when-not (= reg "R5") (str "A=M" "\n")) ; no indirection for TEMP register
        "D=D+A" "\n"
-       "@R13" "\n"
-       "M=D" "\n"       ; R13 holds the address to pop to
+       "@R15" "\n"
+       "M=D" "\n"       ; R15 holds the address to pop to
        (POP-DA "D")
-       "@R13" "\n"
+       "@R15" "\n"
        "A=M" "\n"
        "M=D" "\n"))
 
@@ -153,9 +152,6 @@
                 PUSH-D
                 "(" continue-label ")" "\n"))))
 
-(defn build-function-label [called-f]
-  (str "(" called-f ")" "\n"))
-
 (defn build-internal-label [label-name meta-data]
   (str (:func-name meta-data) "$" label-name))
 
@@ -172,13 +168,15 @@
        "D;JNE" "\n"))
 
 (defn function [func-name num-locals meta-data]
-  (str (build-function-label func-name)
-       "D=0" "\n"
-       (apply str (repeat (bigdec num-locals) PUSH-D))))
+  (let [num-locals (bigdec num-locals)]
+    (str "(" func-name ")" "\n"
+         (if (< 0 num-locals)
+           (str "D=0" "\n" (apply str (repeat num-locals PUSH-D)))
+           ""))))
 
 (defn return []
-  (let [FRAME "R14"
-        RET "R15"]
+  (let [FRAME "R13"
+        RET "R14"]
     (str (COPY "LCL" FRAME)
          (COPY-WITH-NEG-OFFSET FRAME 5 RET)
          (POP- "ARG" 0)
@@ -186,24 +184,33 @@
          "D=M" "\n"   ;
          "D=D+1" "\n" ;
          "@SP" "\n"   ;
-         "M=D" "\n"   ; SP=ARG+!
+         "M=D" "\n"   ; SP=ARG+1
          (COPY-WITH-NEG-OFFSET FRAME 1 "THAT")
          (COPY-WITH-NEG-OFFSET FRAME 2 "THIS")
          (COPY-WITH-NEG-OFFSET FRAME 3 "ARG")
          (COPY-WITH-NEG-OFFSET FRAME 4 "LCL")
-         "@RET" "\n"
+         "@" RET "\n"
+         "A=M" "\n"
          "0;JMP" "\n")))
 
 (defn call [called-f num-args meta-data]
   (let [return-address (str (gensym (:func-name meta-data)))]
-    (str (LOAD-D return-address) PUSH-D
+    (str (LOAD-D return-address)
+         PUSH-D
          (PUSH-M "LCL")
          (PUSH-M "ARG")
          (PUSH-M "THIS")
          (PUSH-M "THAT")
-         (COPY-WITH-NEG-OFFSET "SP" (+ 5 (bigdec num-args)) "ARG")
+
+         "@" (+ 5 (bigdec num-args)) "\n"
+         "D=A" "\n"
+         "@SP" "\n"
+         "D=M-D" "\n"
+         "@ARG" "\n"
+         "M=D" "\n"   ; ARG = SP-nArgs-5
+
          (COPY "SP" "LCL")
-         "@" (build-function-label called-f) "\n"
+         "@" called-f "\n"
          "0;JMP" "\n"
          "(" return-address ")" "\n")))
 
