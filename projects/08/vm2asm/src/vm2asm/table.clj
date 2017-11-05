@@ -3,7 +3,8 @@
 ; "Initialization code to append at the beginning of the asm file; it does:
 ; * init stack pointer SP to memory address 256
 ; * call the function Sys.init"
-(def init-code
+(declare call)
+(defn init-code []
  (str "@256" "\n"
       "D=A" "\n"
       "@SP" "\n"

@@ -1,6 +1,7 @@
 (ns vm2asm.core
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
+            [clojure.java.shell :as shell]
             [vm2asm.file :as file]
             [vm2asm.parse :as parse]
             [vm2asm.table :as table]))
@@ -29,6 +30,16 @@
   (as-> (file/list-vm-files file-or-dir-name) x
     (map parse/functions-from-file x)
     (map translate-functions x)
-    (conj x (list table/init-code)) ; a collection of collections of strings
+    (conj x (list (table/init-code))) ; a collection of collections of strings
     (file/write (file/rename-to-asm file-or-dir-name) x)))
+
+(deftest vm-to-asm-test
+  (let [test-files [{:dir "../FunctionCalls/FibonacciElement/"
+                     :test "../FunctionCalls/FibonacciElement/FibonacciElement.tst"}
+                    {:dir  "../FunctionCalls/StaticsTest/"
+                     :test "../FunctionCalls/StaticsTest/StaticsTest.tst"}]
+        emulator "../../../tools/CPUEmulator.sh"]
+    (doseq [x test-files] (vm-to-asm (:dir x))
+                          (is (= "End of script - Comparison ended successfully\n"
+                                 (:out (shell/sh emulator (:test x))))))))
 

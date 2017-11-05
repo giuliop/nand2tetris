@@ -18,6 +18,12 @@
   (if (= \/ (last dir-name)) dir-name
                     (str dir-name "/")))
 
+(defn add-path-to-filename [path file-name]
+    (str (add-slash-dir path) file-name))
+
+(defn remove-path-form-filename [file-name]
+  (last (re-find #"([^/]*.vm)$" file-name)))
+
 (defn rename-to-asm [file-or-dir-name]
   "If given a filename ending in .vm returns a name with the suffix changed
   to .asm, otherwise appends .vm to the name (putting it inside the directory if
@@ -28,12 +34,6 @@
           (.isDirectory (io/file file-or-dir-name))
              (add-path-to-filename file-or-dir-name (str lastdir ".asm"))
           :else (str file-or-dir-name ".asm"))))
-
-(defn add-path-to-filename [path file-name]
-    (str (add-slash-dir path) file-name))
-
-(defn remove-path-form-filename [file-name]
-  (last (re-find #"([^/]*.vm)$" file-name)))
 
 (defn list-vm-files [file-or-dir-name]
   "If given a file name returns it if it is a .vm file, if given a
