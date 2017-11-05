@@ -21,16 +21,16 @@
 (defn add-path-to-filename [path file-name]
     (str (add-slash-dir path) file-name))
 
-(defn remove-path-form-filename [file-name]
+(defn remove-path-from-vm-filename [file-name]
   (last (re-find #"([^/]*.vm)$" file-name)))
 
 (defn rename-to-asm [file-or-dir-name]
   "If given a filename ending in .vm returns a name with the suffix changed
   to .asm, otherwise appends .vm to the name (putting it inside the directory if
   the input is a directory)"
-  (let [radix (last (re-find #"(.*)\.vm" file-or-dir-name))
+  (let [radix-vm-file (last (re-find #"(.*)\.vm" file-or-dir-name))
         lastdir (last (re-find #"([^/]*)/?$" file-or-dir-name))]
-    (cond radix (str radix ".asm")
+    (cond radix-vm-file (str radix-vm-file ".asm")
           (.isDirectory (io/file file-or-dir-name))
              (add-path-to-filename file-or-dir-name (str lastdir ".asm"))
           :else (str file-or-dir-name ".asm"))))

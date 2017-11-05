@@ -11,9 +11,8 @@
 
 (defn remove-whitespace [line]
   "Takes a line, removes comments and leading/trailing whitespaces"
-  (->> (re-matches re-without-comment line)
-       (last)
-       (str "")
+  (->> (last (re-matches re-without-comment line))
+       (str "") ; to make a nil an empty string
        (str/trim)))
 
 (defn tokenize [line]
@@ -30,23 +29,20 @@
      }))
 
 (defn functions-from-file [file-name]
-  "Takes a filename, opens it and returns a collection of all the funtions in it
-  as maps {:file-name :func-name :vm-lines}"
+  "Takes a filename, opens the file and returns a collection of all the funtions
+  in it as maps {:file-name :func-name :vm-lines}"
   (let [func-dict (fn [func-string]
-                    {:file-name (file/remove-path-form-filename file-name)
+                    {:file-name (file/remove-path-from-vm-filename file-name)
                      :func-name (last (re-find #"(?:^|\n)function (\S*)" func-string))
                      :vm-lines (str/split-lines func-string)})]
     (->> (slurp file-name)
          (re-seq #"(?s)(?:\n|\A)function.*?(?=\nfunction|\z)")
          (map func-dict))))
 
-  (defn f [func-string]
-                    {:file-name "name"
-                     :func-name (last (re-find #"(?:^|\n)function (\S*)" func-string))
-                     :vm-lines (str/split-lines func-string)})
+
 ; TESTING ;;;
 (deftest tokenize-test
   (is (= {:cmd nil :arg1 nil :arg2 nil} (tokenize "")))
   (is (= {:cmd nil :arg1 "arg1" :arg2 "arg2"} (tokenize "invalid arg1 arg2")))
-  (is (= {:cmd "push" :arg1 "arg1" :arg2 "arg2"} (tokenize "push arg1 arg2")))
-  )
+  (is (= {:cmd "push" :arg1 "arg1" :arg2 "arg2"}
+         (tokenize "   push arg1 arg2  //comment"))))
