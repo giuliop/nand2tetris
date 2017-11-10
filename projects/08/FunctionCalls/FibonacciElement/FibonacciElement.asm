@@ -2,7 +2,7 @@
 D=A
 @SP
 M=D
-@19121
+@10809
 D=A
 @SP
 A=M
@@ -49,7 +49,7 @@ D=M
 M=D
 @Sys.init
 0;JMP
-(19121)
+(10809)
 (Main.fibonacci)
 @0
 D=A
@@ -80,7 +80,7 @@ M=M-1
 A=M
 A=M
 D=A-D
-@true19122
+@true10810
 D;JLT
 D=0
 @SP
@@ -88,16 +88,16 @@ A=M
 M=D
 @SP
 M=M+1
-@continue19123
+@continue10811
 0;JMP
-(true19122)
+(true10810)
 D=-1
 @SP
 A=M
 M=D
 @SP
 M=M+1
-(continue19123)
+(continue10811)
 @SP
 M=M-1
 @SP
@@ -216,7 +216,7 @@ A=M
 M=D
 @SP
 M=M+1
-@Main.fibonacci19124
+@Main.fibonacci10812
 D=A
 @SP
 A=M
@@ -263,7 +263,7 @@ D=M
 M=D
 @Main.fibonacci
 0;JMP
-(Main.fibonacci19124)
+(Main.fibonacci10812)
 @0
 D=A
 @ARG
@@ -298,7 +298,7 @@ A=M
 M=D
 @SP
 M=M+1
-@Main.fibonacci19125
+@Main.fibonacci10813
 D=A
 @SP
 A=M
@@ -345,7 +345,7 @@ D=M
 M=D
 @Main.fibonacci
 0;JMP
-(Main.fibonacci19125)
+(Main.fibonacci10813)
 @SP
 M=M-1
 @SP
@@ -432,7 +432,7 @@ A=M
 M=D
 @SP
 M=M+1
-@Sys.init19126
+@Sys.init10814
 D=A
 @SP
 A=M
@@ -479,7 +479,7 @@ D=M
 M=D
 @Main.fibonacci
 0;JMP
-(Sys.init19126)
+(Sys.init10814)
 (Sys.init$WHILE)
 @Sys.init$WHILE
 0;JMP
