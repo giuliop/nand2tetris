@@ -1,0 +1,53 @@
+/** The Player object, a stick that moved up and down */
+class Player {
+
+    field int x, y; // x and y-axis position of the top left pixel of the player
+    field int oldY; // old y-axis position of the top left pixel of the player 
+    field int sizeX, sizeY; // pixel size of the player
+
+    /** Constructs a new player */
+    constructor Player new(int Ax, int Ay, int AsizeX, int AsizeY) {
+        let sizeX = AsizeX;
+        let sizeY = AsizeY;
+        let x = Ax;
+        let y = Ay;
+        let oldY = Ay;
+        do draw();
+        return this;
+    }
+    
+    /** Draws the player on the screen */
+    method void draw() {
+        if (y > oldY) {
+            do Screen.setColor(true);
+            Screen.drawRectangle(x, oldY + sizeY, x + sizeX, y-1 + sizeY);
+            do Screen.setColor(false);
+            Screen.drawRectangle(x, oldY, x + sizeX, y-1);
+        }
+        if (y < oldY) {
+            do Screen.setColor(true);
+            Screen.drawRectangle(x, y, x + sizeX, oldY-1);
+            do Screen.setColor(false);
+            Screen.drawRectangle(x, y + sizeY, x + sizeX, oldY-1 + sizeY);
+        }
+        return;
+    }
+
+    /** Moves the player up and down */
+    method void move(int step) {
+        oldY = y;
+        y = y + step;
+        if y < 0 {
+            y = 0;
+        }
+        if y > 255 {
+            y = 255;
+        }
+    }
+
+    /** Disposes this object */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

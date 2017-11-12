@@ -1,0 +1,32 @@
+/** Score keeping funcionalities */
+class Score {
+    field int points;
+
+    /** Construct a score keeper */
+    constructor Score new() {
+        let score = 0;
+        return this;
+    }
+
+    /** Score a point and return the new score */
+    method int score(int thePoints) {
+        let points = points + thePoints;
+        return points;
+    }
+
+    /** Disposes this object */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    /** Get the number of points */
+    method int getPoints() {
+        return points;
+    }
+
+    /** Reset the score to zero */
+    method void reset() {
+        let points = 0;
+    }
+}

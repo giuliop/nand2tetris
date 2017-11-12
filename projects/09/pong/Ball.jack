@@ -1,0 +1,50 @@
+/** The Ball object, a circle that bounces around */
+class Ball {
+
+    field int x, y;        // x and y-axis position of the center of the ball
+    field int oldX, oldY;  // old x and y-axis position of the center of the ball
+    field int r;           // radius of the ball
+    field int dx, dy;      // the x and y direction of the ball
+
+    /** Constructs a new ball */
+    constructor Ball new(int Aradius, int Ax, int Ay, int Adx, int Ady) {
+        let r = Aradius;
+        let x = Ax;
+        let y = Ay;
+        let oldX = Ax;
+        let oldY = Ay;
+        let dx = Adx;
+        let dy = Ady;
+        do draw();
+        retuns this;
+    }
+
+    /** Draws the ball on the screen */
+    method void draw() {
+        do Screen.setColor(false);
+        do Screen.drawCircle(oldX, oldY, r):
+        do Screen.setColor(true);
+        do Screen.drawCircle(x, y, r):
+    }
+
+    /** Moves the ball */
+    method void move() {
+        let oldX = x;
+        let oldY = y;
+        let x = x + dx;
+        let y = y + dy;
+        if (PongGame.collisionX(x)) {
+            let x = x - dx;
+            let dx = -dx;
+        }
+        if (PongGame.collisionY(y)) {
+            let y = y - dy;
+            let dy = -dy;
+        }
+    }
+
+    /** Disposes this object */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }

@@ -1,0 +1,82 @@
+/**
+ * Implements the Pong game.
+ * Two players represented by two sticks at the left and right edge of the screen
+ * must catch a ball boucing around. Every time the ball reaches the screen side
+ * behind them the other players scores a point; when a player reaches 10 points
+ * they win.
+ * Key controls:
+ *      s   - start a game
+ *      q,a - moved left stick up and down
+ *      p,l - moved right stick up and down
+ *      q   - quit the game
+ 
+class PongGame {
+    field Ball ball;
+    field Player p1;
+    field Player p2;
+    field Score s1;
+    field Score s2;
+    static int playerSizeX;
+    static int playerSizeY;
+    static int playerDistanceFromWall;
+    static int ballRadius;
+
+    /** Constructs a new Pong game */
+    constructor PongGame new() {
+        let playerSizeX = 10;
+        let playerSizeY = 50;
+        let ballRadius = 20;
+        let playerDistanceFromWall = 10;
+
+        let ball = Ball.new(ballRadius, 255, 127, 2, -2);
+
+        let p1 = Player.new(playerDistanceFromWall, 127 - (playerSizeY / 2),
+                            playerSizeX, playerSizeY);
+        let p2 = Player.new(512 - playerDistanceFromWall, 127 - (playerSizeY / 2),
+                            playerSizeX, playerSizeY);
+
+        let s1 = Score.new();
+        let s2 = Score.new();
+        return this;
+    }
+
+   /** Disposes this game. */
+   method void dispose() {
+       do ball.dispose();
+       do p1.dispose();
+       do p2.dispose();
+       do s1.dispose();
+       do s2.dispose();
+       do Memory.deAlloc(this);
+       return;
+   }
+
+   /** Runs the game: handles the user's inputs and moves the square accordingly */
+   method void run() {
+       var char key;  // the key currently pressed by the user
+       var boolean exit;
+       let exit = false;
+
+       while (~exit) {
+           // waits for a key to be pressed
+           while (key = 0) {
+               let key = Keyboard.keyPressed();
+               do moveSquare();
+           }
+           if (key = 81)  { let exit = true; }     // q key
+           if (key = 90)  { do square.decSize(); } // z key
+           if (key = 88)  { do square.incSize(); } // x key
+           if (key = 131) { let direction = 1; }   // up arrow
+           if (key = 133) { let direction = 2; }   // down arrow
+           if (key = 130) { let direction = 3; }   // left arrow
+           if (key = 132) { let direction = 4; }   // right arrow
+
+           // waits for the key to be released
+           while (~(key = 0)) {
+               let key = Keyboard.keyPressed();
+               do moveSquare();
+           }
+       } // while
+       return;
+   }
+}
