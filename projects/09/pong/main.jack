@@ -1,0 +1,10 @@
+/** Initializes a new Pong game and starts running it. */
+class Main {
+    function void main() {
+        var PongGame game;
+        let game = PongGame.new();
+        do game.run();
+        do game.dispose();
+        return;
+    }
+}

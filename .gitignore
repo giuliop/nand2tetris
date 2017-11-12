@@ -9,6 +9,7 @@
 !*.cmp
 !*.tst
 !*.vm
+!*.jack
 !/tools/*.sh
 
 # ...even if they are in subdirectories
