@@ -2,14 +2,14 @@
 class Score {
     field int points;
 
-    /** Construct a score keeper */
+    /** Constructs a score keeper */
     constructor Score new() {
-        let score = 0;
+        let points = 0;
         return this;
     }
 
-    /** Score a point and return the new score */
-    method int score(int thePoints) {
+    /** Changes the score and returns the new score */
+    method int changeScore(int thePoints) {
         let points = points + thePoints;
         return points;
     }
@@ -20,12 +20,12 @@ class Score {
         return;
     }
 
-    /** Get the number of points */
+    /** Returns the number of points */
     method int getPoints() {
         return points;
     }
 
-    /** Reset the score to zero */
+    /** Resets the score to zero */
     method void reset() {
         let points = 0;
     }

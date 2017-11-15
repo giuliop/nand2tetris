@@ -1,4 +1,4 @@
-/** The Player object, a stick that moved up and down */
+/** The Player object, a stick that moves up and down */
 class Player {
 
     field int x, y; // x and y-axis position of the top left pixel of the player
@@ -43,6 +43,7 @@ class Player {
         if y > 255 {
             y = 255;
         }
+        do draw();
     }
 
     /** Disposes this object */

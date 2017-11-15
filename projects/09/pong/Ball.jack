@@ -5,9 +5,10 @@ class Ball {
     field int oldX, oldY;  // old x and y-axis position of the center of the ball
     field int r;           // radius of the ball
     field int dx, dy;      // the x and y direction of the ball
+    field Game theGame;    // reference to the game being played
 
     /** Constructs a new ball */
-    constructor Ball new(int Aradius, int Ax, int Ay, int Adx, int Ady) {
+    constructor Ball new(int Aradius, int Ax, int Ay, int Adx, int Ady, Game game) {
         let r = Aradius;
         let x = Ax;
         let y = Ay;
@@ -15,6 +16,7 @@ class Ball {
         let oldY = Ay;
         let dx = Adx;
         let dy = Ady;
+        let theGame = game;
         do draw();
         retuns this;
     }
@@ -33,14 +35,15 @@ class Ball {
         let oldY = y;
         let x = x + dx;
         let y = y + dy;
-        if (PongGame.collisionX(x)) {
+        if (do theGame.collisionX(x + r, y)) {
             let x = x - dx;
             let dx = -dx;
         }
-        if (PongGame.collisionY(y)) {
+        if (do theGame.collisionY(y + r)) {
             let y = y - dy;
             let dy = -dy;
         }
+        do draw();
     }
 
     /** Disposes this object */

@@ -1,82 +1,186 @@
 /**
  * Implements the Pong game.
- * Two players represented by two sticks at the left and right edge of the screen
+ * One player represented by a stick at the left edge of the screen
  * must catch a ball boucing around. Every time the ball reaches the screen side
- * behind them the other players scores a point; when a player reaches 10 points
- * they win.
+ * behind the player he loses a point; when a player loses 10 points the game is
+ * over
  * Key controls:
- *      s   - start a game
- *      q,a - moved left stick up and down
- *      p,l - moved right stick up and down
- *      q   - quit the game
+ *      z - reset the score and restart a game
+ *      up arrow - move stick up
+ *      down arrow - move stick down
+ *      q - quit the game
+ */
  
 class PongGame {
     field Ball ball;
-    field Player p1;
-    field Player p2;
-    field Score s1;
-    field Score s2;
+    field Player player;
+    field Score score;
+    field boolean goal;  
+
     static int playerSizeX;
     static int playerSizeY;
     static int playerDistanceFromWall;
     static int ballRadius;
+    static int scoreX;
+    static int scoreY;
 
-    /** Constructs a new Pong game */
-    constructor PongGame new() {
+    /** Init the static variables of the game */
+    function void initGame() {
         let playerSizeX = 10;
         let playerSizeY = 50;
         let ballRadius = 20;
         let playerDistanceFromWall = 10;
+        let scoreX = 450;
+        let scoreY = 5;
+    }
 
-        let ball = Ball.new(ballRadius, 255, 127, 2, -2);
+    /** Constructs a new Pong game */
+    constructor PongGame new() {
+        do initGame();
+        let ball = startBall();
 
-        let p1 = Player.new(playerDistanceFromWall, 127 - (playerSizeY / 2),
+        let player = Player.new(playerDistanceFromWall, 127 - (playerSizeY / 2),
                             playerSizeX, playerSizeY);
-        let p2 = Player.new(512 - playerDistanceFromWall, 127 - (playerSizeY / 2),
-                            playerSizeX, playerSizeY);
 
-        let s1 = Score.new();
-        let s2 = Score.new();
+        let score = Score.new();
+        do printScore();
+        let goal = false;
+        do Output.moveCursor(scoreX, scoreY);
+        do Output.printString("Goals : ")
+        do Output.moveCursor(scoreX, scoreY + 5);
+        do Output.printString("q to quit, z to restart")
         return this;
     }
 
-   /** Disposes this game. */
-   method void dispose() {
-       do ball.dispose();
-       do p1.dispose();
-       do p2.dispose();
-       do s1.dispose();
-       do s2.dispose();
-       do Memory.deAlloc(this);
-       return;
-   }
+    /** Prints the score */
+    method void printScore() {
+        do Output.moveCursor(scoreX + 9, scoreY);
+        do Output.printInt(do score.getPoint());
+        do Output.printString("     ");
+        return;
+    }
 
-   /** Runs the game: handles the user's inputs and moves the square accordingly */
-   method void run() {
-       var char key;  // the key currently pressed by the user
-       var boolean exit;
-       let exit = false;
+    /** Starts the ball */
+    method Ball startBall() {
+        return Ball.new(ballRadius, 255, 127, 2, -2);
+    }
 
-       while (~exit) {
-           // waits for a key to be pressed
-           while (key = 0) {
-               let key = Keyboard.keyPressed();
-               do moveSquare();
-           }
-           if (key = 81)  { let exit = true; }     // q key
-           if (key = 90)  { do square.decSize(); } // z key
-           if (key = 88)  { do square.incSize(); } // x key
-           if (key = 131) { let direction = 1; }   // up arrow
-           if (key = 133) { let direction = 2; }   // down arrow
-           if (key = 130) { let direction = 3; }   // left arrow
-           if (key = 132) { let direction = 4; }   // right arrow
+    /** Disposes this game. */
+    method void dispose() {
+        do ball.dispose();
+        do player.dispose();
+        do score.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
 
-           // waits for the key to be released
-           while (~(key = 0)) {
-               let key = Keyboard.keyPressed();
-               do moveSquare();
-           }
-       } // while
-       return;
-   }
+    /** Checks for collisions with of the ball with the bottom or ceiling of the
+     * screen by taking as input the y coordinate of the ball and returns true for
+     * collision and false if no collision
+     */
+    method boolean collisionY(int y) {
+        return ((y < 0) | (y > 255));
+    }
+
+    /** Checks for collisions with of the ball with the player, the right edge or
+     * the left edge of the screen (a score), by taking as input the x,y coordinates 
+        return this;
+    }
+
+    /** Prints the score */
+    method void printScore() {
+        do Output.moveCursor(scoreX + 9, scoreY);
+        do Output.printInt(do score.getPoint());
+        do Output.printString("     ");
+        return;
+    }
+
+    /** Disposes this game. */
+    method void dispose() {
+        do ball.dispose();
+        do player.dispose();
+        do score.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    /** Checks for collisions with of the ball with the bottom or ceiling of the
+     * screen by taking as input the y coordinate of the ball and returns true for
+     * collision and false if no collision
+     */
+    method boolean collisionY(int y) {
+        return ((y < 0) | (y > 255));
+    }
+
+    /** Checks for collisions with of the ball with the player, the right edge or
+     * the left edge of the screen (a score), by taking as input the x,y coordinates 
+     * of the ball and returns true for collision and false if no collision, taking
+     * care of setting the goal field to true if a score has happened
+     */
+    method boolean collisionX(x, y) {
+        if (x < 0) {
+            let goal = true;
+        }
+        else {
+            if (((y > player.y) & (y < (player.y + playerSizeY)) &
+                    (x < (p1.x + playerSizeX)) & (x > (p1.x))) |
+                    (x > 511)) {
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /** Increments the score and restart the ball */
+    method void goalScored() {
+        do score.changeScore(1);
+        do printScore();
+        do ball.dispose();
+        let ball = startBall();
+        ball.move();
+    }
+
+    /** Runs the game: handles the user's inputs and moves the ball and the
+     * players accordingly
+     */
+    method void run() {
+        var char key;  // the key currently pressed by the user
+        var boolean exit, restart;
+        var int direction;
+        let exit = false;
+
+        while (~exit) {
+            let restart = false;
+            let direction = 0;
+            // waits for a key to be pressed
+            while (key = 0) {
+                let key = Keyboard.keyPressed();
+                do ball.move();
+                if goal {
+                    do goalScored();
+                }
+            }
+            if (key = 81)  { let exit = true; }     // q key
+            if (key = 90)  { let restart = true; } // z key
+            if (key = 131) { let direction = 1; }   // up arrow
+            if (key = 133) { let direction = -1; }   // down arrow
+
+            // waits for the key to be released
+            while (~(key = 0)) {
+                let key = Keyboard.keyPressed();
+                if restart {
+                    do score.reset();
+                    do printScore();
+                }
+                if (~(direction = 0)) {
+                    do player.move(direction);
+                }
+                do ball.move();
+                if goal {
+                    do goalScored();
+                }
+            }
+        } // while
+        return;
+    }
 }
