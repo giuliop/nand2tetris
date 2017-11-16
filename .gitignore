@@ -18,3 +18,4 @@
 # ... but ignore this
 /projects/**/.gitignore
 /projects/08/**/*.asm
+/projects/09/**/*.vm
