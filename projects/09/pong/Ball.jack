@@ -35,14 +35,23 @@ class Ball {
         let oldY = y;
         let x = x + dx;
         let y = y + dy;
-        if (do theGame.collisionX(x + r, y)) {
+        if (do theGame.collisionX(x, y, r)) {
             let x = x - dx;
             let dx = -dx;
         }
-        if (do theGame.collisionY(y + r)) {
+        if (do theGame.collisionY(y,r)) {
             let y = y - dy;
             let dy = -dy;
         }
+        do draw();
+    }
+
+    /** Restarts the ball in a new location */
+    method void restart(nt Ax, int Ay) {
+        let oldX = x;
+        let oldY = y;
+        let x = Ax;
+        let y = Ay;
         do draw();
     }
 

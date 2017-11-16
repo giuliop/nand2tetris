@@ -19,8 +19,10 @@ class PongGame {
 
     static int playerSizeX;
     static int playerSizeY;
-    static int playerDistanceFromWall;
     static int ballRadius;
+    static int ballX;
+    static int ballY;
+    static int playerDistanceFromWall;
     static int scoreX;
     static int scoreY;
 
@@ -29,6 +31,8 @@ class PongGame {
         let playerSizeX = 10;
         let playerSizeY = 50;
         let ballRadius = 20;
+        let ballX = 255;
+        let ballY = 127;
         let playerDistanceFromWall = 10;
         let scoreX = 450;
         let scoreY = 5;
@@ -37,32 +41,27 @@ class PongGame {
     /** Constructs a new Pong game */
     constructor PongGame new() {
         do initGame();
-        let ball = startBall();
+        let ball = Ball.new(ballRadius, ballX, ballY, 2, -2, this);
 
         let player = Player.new(playerDistanceFromWall, 127 - (playerSizeY / 2),
                             playerSizeX, playerSizeY);
 
         let score = Score.new();
-        do printScore();
         let goal = false;
         do Output.moveCursor(scoreX, scoreY);
         do Output.printString("Goals : ")
         do Output.moveCursor(scoreX, scoreY + 5);
         do Output.printString("q to quit, z to restart")
+        do printScore();
         return this;
     }
 
     /** Prints the score */
     method void printScore() {
         do Output.moveCursor(scoreX + 9, scoreY);
-        do Output.printInt(do score.getPoint());
+        do Output.printInt(do score.getPoints());
         do Output.printString("     ");
         return;
-    }
-
-    /** Starts the ball */
-    method Ball startBall() {
-        return Ball.new(ballRadius, 255, 127, 2, -2);
     }
 
     /** Disposes this game. */
@@ -108,8 +107,8 @@ class PongGame {
      * screen by taking as input the y coordinate of the ball and returns true for
      * collision and false if no collision
      */
-    method boolean collisionY(int y) {
-        return ((y < 0) | (y > 255));
+    method boolean collisionY(int y, int radius) {
+        return (((y - radius) < 0) | ((y + radius) > 255));
     }
 
     /** Checks for collisions with of the ball with the player, the right edge or
@@ -117,14 +116,15 @@ class PongGame {
      * of the ball and returns true for collision and false if no collision, taking
      * care of setting the goal field to true if a score has happened
      */
-    method boolean collisionX(x, y) {
-        if (x < 0) {
+    method boolean collisionX(x, y, radius) {
+        if ((x - radius) < 0) {
             let goal = true;
         }
         else {
-            if (((y > player.y) & (y < (player.y + playerSizeY)) &
-                    (x < (p1.x + playerSizeX)) & (x > (p1.x))) |
-                    (x > 511)) {
+            if ((((y + radius) > player.y) &
+                ((y - radius) < (player.y + playerSizeY)) &
+                ((x - radius) < (p1.x + playerSizeX)) &
+                ((x + radius) > (p1.x))) | ((x + radius) > 511)) {
                     return true;
             }
         }
@@ -135,8 +135,7 @@ class PongGame {
     method void goalScored() {
         do score.changeScore(1);
         do printScore();
-        do ball.dispose();
-        let ball = startBall();
+        do ball.restart(ballX, ballY);
         ball.move();
     }
 
@@ -150,8 +149,13 @@ class PongGame {
         let exit = false;
 
         while (~exit) {
-            let restart = false;
             let direction = 0;
+            if restart {
+                do score.reset();
+                do printScore();
+                do ball.restart(ballX, ballY);
+                let restart = false;
+            }
             // waits for a key to be pressed
             while (key = 0) {
                 let key = Keyboard.keyPressed();
@@ -168,10 +172,6 @@ class PongGame {
             // waits for the key to be released
             while (~(key = 0)) {
                 let key = Keyboard.keyPressed();
-                if restart {
-                    do score.reset();
-                    do printScore();
-                }
                 if (~(direction = 0)) {
                     do player.move(direction);
                 }
