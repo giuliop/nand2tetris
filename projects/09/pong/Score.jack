@@ -28,5 +28,6 @@ class Score {
     /** Resets the score to zero */
     method void reset() {
         let points = 0;
+        return;
     }
 }

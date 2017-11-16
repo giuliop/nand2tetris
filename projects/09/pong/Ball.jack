@@ -18,15 +18,16 @@ class Ball {
         let dy = Ady;
         let theGame = game;
         do draw();
-        retuns this;
+        return this;
     }
 
     /** Draws the ball on the screen */
     method void draw() {
         do Screen.setColor(false);
-        do Screen.drawCircle(oldX, oldY, r):
+        do Screen.drawCircle(oldX, oldY, r);
         do Screen.setColor(true);
-        do Screen.drawCircle(x, y, r):
+        do Screen.drawCircle(x, y, r);
+        return;
     }
 
     /** Moves the ball */
@@ -35,15 +36,16 @@ class Ball {
         let oldY = y;
         let x = x + dx;
         let y = y + dy;
-        if (do theGame.collisionX(x, y, r)) {
+        if (theGame.collisionX(x, y, r)) {
             let x = x - dx;
             let dx = -dx;
         }
-        if (do theGame.collisionY(y,r)) {
+        if (theGame.collisionY(y,r)) {
             let y = y - dy;
             let dy = -dy;
         }
         do draw();
+        return;
     }
 
     /** Restarts the ball in a new location */
@@ -53,6 +55,7 @@ class Ball {
         let x = Ax;
         let y = Ay;
         do draw();
+        return;
     }
 
     /** Disposes this object */
@@ -60,3 +63,4 @@ class Ball {
         do Memory.deAlloc(this);
         return;
     }
+}

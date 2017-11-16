@@ -20,30 +20,31 @@ class Player {
     method void draw() {
         if (y > oldY) {
             do Screen.setColor(true);
-            Screen.drawRectangle(x, oldY + sizeY, x + sizeX, y-1 + sizeY);
+            do Screen.drawRectangle(x, oldY + sizeY, x + sizeX, y-1 + sizeY);
             do Screen.setColor(false);
-            Screen.drawRectangle(x, oldY, x + sizeX, y-1);
+            do Screen.drawRectangle(x, oldY, x + sizeX, y-1);
         }
         if (y < oldY) {
             do Screen.setColor(true);
-            Screen.drawRectangle(x, y, x + sizeX, oldY-1);
+            do Screen.drawRectangle(x, y, x + sizeX, oldY-1);
             do Screen.setColor(false);
-            Screen.drawRectangle(x, y + sizeY, x + sizeX, oldY-1 + sizeY);
+            do Screen.drawRectangle(x, y + sizeY, x + sizeX, oldY-1 + sizeY);
         }
         return;
     }
 
     /** Moves the player up and down */
     method void move(int step) {
-        oldY = y;
-        y = y + step;
-        if y < 0 {
-            y = 0;
+        let oldY = y;
+        let y = y + step;
+        if (y < 0) {
+            let y = 0;
         }
-        if y > 255 {
-            y = 255;
+        if (y > 255) {
+            let y = 255;
         }
         do draw();
+        return;
     }
 
     /** Disposes this object */
