@@ -5,10 +5,10 @@ class Ball {
     field int oldX, oldY;  // old x and y-axis position of the center of the ball
     field int r;           // radius of the ball
     field int dx, dy;      // the x and y direction of the ball
-    field Game theGame;    // reference to the game being played
+    field PongGame theGame;    // reference to the game being played
 
     /** Constructs a new ball */
-    constructor Ball new(int Aradius, int Ax, int Ay, int Adx, int Ady, Game game) {
+    constructor Ball new(int Aradius, int Ax, int Ay, int Adx, int Ady, PongGame game) {
         let r = Aradius;
         let x = Ax;
         let y = Ay;
@@ -44,17 +44,17 @@ class Ball {
             let y = y - dy;
             let dy = -dy;
         }
-        do draw();
         return;
     }
 
     /** Restarts the ball in a new location */
-    method void restart(nt Ax, int Ay) {
+    method void restart(int Ax, int Ay) {
         let oldX = x;
         let oldY = y;
         let x = Ax;
         let y = Ay;
-        do draw();
+        let dx = -dx;
+        let dy = -dy;
         return;
     }
 

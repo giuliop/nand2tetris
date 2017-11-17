@@ -11,8 +11,9 @@ class Player {
         let sizeY = AsizeY;
         let x = Ax;
         let y = Ay;
-        let oldY = Ay;
-        do draw();
+        let oldY = y;
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x, y, x + sizeX, y + sizeY);
         return this;
     }
 
@@ -29,16 +30,16 @@ class Player {
     /** Draws the player on the screen */
     method void draw() {
         if (y > oldY) {
-            do Screen.setColor(true);
-            do Screen.drawRectangle(x, oldY + sizeY, x + sizeX, y-1 + sizeY);
             do Screen.setColor(false);
             do Screen.drawRectangle(x, oldY, x + sizeX, y-1);
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x, oldY + sizeY, x + sizeX, y-1 + sizeY);
         }
         if (y < oldY) {
-            do Screen.setColor(true);
-            do Screen.drawRectangle(x, y, x + sizeX, oldY-1);
             do Screen.setColor(false);
             do Screen.drawRectangle(x, y + sizeY, x + sizeX, oldY-1 + sizeY);
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x, y, x + sizeX, oldY-1);
         }
         return;
     }
@@ -50,8 +51,8 @@ class Player {
         if (y < 0) {
             let y = 0;
         }
-        if (y > 255) {
-            let y = 255;
+        if (y > (255 - sizeY)) {
+            let y = 255 - sizeY;
         }
         do draw();
         return;

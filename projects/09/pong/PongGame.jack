@@ -1,11 +1,8 @@
 /**
  * Implements the Pong game.
  * One player represented by a stick at the left edge of the screen
- * must catch a ball boucing around. Every time the ball reaches the screen side
- * behind the player he loses a point; when a player loses 10 points the game is
- * over
+ * must catch a ball boucing around
  * Key controls:
- *      z - reset the score and restart a game
  *      up arrow - move stick up
  *      down arrow - move stick down
  *      q - quit the game
@@ -14,7 +11,6 @@
 class PongGame {
     field Ball ball;
     field Player player;
-    field Score score;
     field boolean goal;  
 
     static int playerSizeX;
@@ -22,21 +18,21 @@ class PongGame {
     static int ballRadius;
     static int ballX;
     static int ballY;
+    static int ballDX;
+    static int ballDY;
     static int playerDistanceFromWall;
-    static int scoreX;
-    static int scoreY;
     static int delay;
 
     /** Init the static variables of the game */
     function void initGame() {
         let playerSizeX = 10;
-        let playerSizeY = 50;
-        let ballRadius = 20;
+        let playerSizeY = 40;
+        let ballRadius = 5;
         let ballX = 255;
         let ballY = 127;
+        let ballDX = 1;
+        let ballDY = -1;
         let playerDistanceFromWall = 10;
-        let scoreX = 450;
-        let scoreY = 5;
         let delay = 5;
         return;
     }
@@ -44,34 +40,19 @@ class PongGame {
     /** Constructs a new Pong game */
     constructor PongGame new() {
         do PongGame.initGame();
-        let ball = Ball.new(ballRadius, ballX, ballY, 2, -2, this);
+        let ball = Ball.new(ballRadius, ballX, ballY, ballDX, ballDY, this);
 
         let player = Player.new(playerDistanceFromWall, 127 - (playerSizeY / 2),
                             playerSizeX, playerSizeY);
 
-        let score = Score.new();
         let goal = false;
-        do Output.moveCursor(scoreX, scoreY);
-        do Output.printString("Goals : ");
-        do Output.moveCursor(scoreX, scoreY + 5);
-        do Output.printString("q to quit, z to restart");
-        do printScore();
         return this;
-    }
-
-    /** Prints the score */
-    method void printScore() {
-        do Output.moveCursor(scoreX + 9, scoreY);
-        do Output.printInt(score.getPoints());
-        do Output.printString("     ");
-        return;
     }
 
     /** Disposes this game. */
     method void dispose() {
         do ball.dispose();
         do player.dispose();
-        do score.dispose();
         do Memory.deAlloc(this);
         return;
     }
@@ -81,7 +62,7 @@ class PongGame {
      * collision and false if no collision
      */
     method boolean collisionY(int y, int radius) {
-        return (((y - radius) < 0) | ((y + radius) > 255));
+        return (((y - radius) < 1) | ((y + radius) > 254));
     }
 
     /** Checks for collisions with of the ball with the player, the right edge or
@@ -93,17 +74,16 @@ class PongGame {
         var int playerX, playerY;
         let playerX = player.X();
         let playerY = player.Y();
-        if ((x - radius) < 0) {
+        if ((x - radius) < 1) {
             let goal = true;
             return false;
         }
-        if ( ((y + radius) > playerY) &
+        if (((y + radius) > playerY) &
                 ((y - radius) < (playerY + playerSizeY)) &
-                ((x - radius) < (playerX + playerSizeX)) &
-                ((x + radius) > (playerX))) {
+                ((x - radius) = (playerX + playerSizeX))) {
             return true;
         }
-        if ((x + radius) > 511) {
+        if ((x + radius) > 510) {
             return true;
         }
         return false;
@@ -111,10 +91,10 @@ class PongGame {
 
     /** Increments the score and restart the ball */
     method void goalScored() {
-        do score.changeScore(1);
-        do printScore();
         do ball.restart(ballX, ballY);
-        do ball.move();
+        do ball.draw();
+        do Sys.wait(1500);
+        let goal = false;
         return;
     }
 
@@ -123,31 +103,25 @@ class PongGame {
      */
     method void run() {
         var char key;  // the key currently pressed by the user
-        var boolean exit, restart;
+        var boolean exit;
         var int direction;
         let exit = false;
 
         while (~exit) {
             let direction = 0;
-            if (restart) {
-                do score.reset();
-                do printScore();
-                do ball.restart(ballX, ballY);
-                let restart = false;
-            }
             // waits for a key to be pressed
             while (key = 0) {
                 let key = Keyboard.keyPressed();
                 do ball.move();
+                do ball.draw();
                 if (goal) {
                     do goalScored();
                 }
                 do Sys.wait(delay);  // delays the next movement
             }
             if (key = 81)  { let exit = true; }     // q key
-            if (key = 90)  { let restart = true; } // z key
-            if (key = 131) { let direction = 1; }   // up arrow
-            if (key = 133) { let direction = -1; }   // down arrow
+            if (key = 131) { let direction = -1; }   // up arrow
+            if (key = 133) { let direction = 1; }   // down arrow
 
             // waits for the key to be released
             while (~(key = 0)) {
@@ -156,6 +130,7 @@ class PongGame {
                     do player.move(direction);
                 }
                 do ball.move();
+                do ball.draw();
                 if (goal) {
                     do goalScored();
                 }
