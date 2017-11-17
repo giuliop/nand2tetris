@@ -15,7 +15,17 @@ class Player {
         do draw();
         return this;
     }
+
+    /** Returns player.x */
+    method int X() {
+        return x;
+    }
     
+    /** Returns player.y */
+    method int Y() {
+        return y;
+    }
+
     /** Draws the player on the screen */
     method void draw() {
         if (y > oldY) {

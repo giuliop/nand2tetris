@@ -90,14 +90,17 @@ class PongGame {
      * care of setting the goal field to true if a score has happened
      */
     method boolean collisionX(int x, int y, int radius) {
+        var int playerX, playerY;
+        let playerX = player.X();
+        let playerY = player.Y();
         if ((x - radius) < 0) {
             let goal = true;
             return false;
         }
-        if ( ((y + radius) > player.y) &
-                ((y - radius) < (player.y + playerSizeY)) &
-                ((x - radius) < (player.x + playerSizeX)) &
-                ((x + radius) > (player.x))) {
+        if ( ((y + radius) > playerY) &
+                ((y - radius) < (playerY + playerSizeY)) &
+                ((x - radius) < (playerX + playerSizeX)) &
+                ((x + radius) > (playerX))) {
             return true;
         }
         if ((x + radius) > 511) {
