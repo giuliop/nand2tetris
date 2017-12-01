@@ -10,6 +10,7 @@
 !*.tst
 !*.vm
 !*.jack
+!*.xml
 !/tools/*.sh
 
 # ...even if they are in subdirectories
