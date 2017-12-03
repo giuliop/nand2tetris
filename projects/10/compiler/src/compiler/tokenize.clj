@@ -45,17 +45,18 @@
          (str "") ; to make a nil an empty string
          (str/trim))))
 
-(defn tokens [clean-program]
-  "Takes a program without comments and returns a list of tokens in the form
-  {:type xxx, :value xxx}"
-  (let [xs (re-seq #"\w+|[^\w\s\"]|\".*\"" clean-program)]
-    (map #(hash-map :type (token-type %), :value %) xs)))
-
 (defn clean [program]
   "Takes a program and removes comments"
   (->> (str/split-lines program)
        (map remove-whitespace)
        (str/join "\n")))
+
+(defn tokens [program]
+  "Takes a program and returns a list of tokens in the form
+  {:type xxx, :value xxx}"
+  (let [program (clean program)
+        xs (re-seq #"\w+|[^\w\s\"]|\".*\"" program)]
+    (map #(hash-map :type (token-type %), :value %) xs)))
 
 (defn remove-quote [x]
   "Takes a string of a string and removes the start and end quote"
@@ -83,7 +84,6 @@
   "Takes a xxx.jack filename, reads the file and write an xxx-tokens.xml file
    with the tokens in the input file"
   (->> (slurp filename)
-       (clean)
        (tokens)
        (write-xml (file/make-token-xml-filename filename))))
 

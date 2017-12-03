@@ -16,7 +16,9 @@
   "Takes a xxx.jack filename and returns a xxx-tokens.xml filename"
   (str (last (re-find #"(.*)\.jack" jack-filename)) "-tokens.xml"))
 
-
+(defn make-parse-xml-filename [jack-filename]
+  "Takes a xxx.jack filename and returns a xxx-parse.xml filename"
+  (str (last (re-find #"(.*)\.jack" jack-filename)) "-parse.xml"))
 
 
 
