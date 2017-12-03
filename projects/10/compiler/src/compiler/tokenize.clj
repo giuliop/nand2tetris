@@ -47,9 +47,9 @@
 
 (defn tokens [clean-program]
   "Takes a program without comments and returns a list of tokens in the form
-  [:token-type token]"
+  {:type xxx, :value xxx}"
   (let [xs (re-seq #"\w+|[^\w\s\"]|\".*\"" clean-program)]
-    (map #(vector (token-type %) %) xs)))
+    (map #(hash-map :type (token-type %), :value %) xs)))
 
 (defn clean [program]
   "Takes a program and removes comments"
@@ -73,9 +73,9 @@
   "Takes a filename and a list of tokens and write a filename.xml file with the
   tokens"
   (let [xml-token (fn [token]
-                    (let [[t x] token
-                          x (transform-tokens t x)]
-                      (str "<" t ">" " " x " " "</" t ">")))
+                    (let [{t :type, v :value} token
+                          v (transform-tokens t v)]
+                      (str "<" t ">" " " v " " "</" t ">")))
         xml (list '("<tokens>") (map xml-token tokens) '("</tokens>"))]
     (file/write filename xml)))
 
