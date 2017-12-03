@@ -70,7 +70,7 @@
         :else token))
 
 (defn write-xml [filename tokens]
-  "Takes a filename and a list of tokens and write a filename.xml file with the
+  "Takes a filename and a list of tokens and writes a filename.xml file with the
   tokens"
   (let [xml-token (fn [token]
                     (let [{t :type, v :value} token
