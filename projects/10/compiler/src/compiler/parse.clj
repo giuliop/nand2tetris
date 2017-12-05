@@ -1,6 +1,7 @@
 (ns compiler.parse
  (:require [compiler.file :as file]
            [compiler.tokenize :as tokenize]
+           [compiler.xml :as xml]
            [clojure.java.shell :as shell]
            [clojure.test :refer :all]
            [clojure.zip :as zip]
@@ -63,61 +64,24 @@
                ;"return" parse-returnStatement
                })
 
-(defn open-tag [text]
-  "Outputs <text>"
-  (str "<" text ">"))
-
-(defn close-tag [text]
-  "Outputs </text>"
-  (str "</" text ">"))
-
-(declare xmlize)
-(defn xml-branch [loc]
-  "Takes a branch and outputs its xml code"
-  (let [node (zip/node loc)]
-    (str (open-tag (:type node))
-         "\n"
-         (xmlize (zip/down loc))
-         (close-tag (:type node))
-         "\n")))
-
-(defn xml-node [loc]
-  "Takes a node and outputs its xml code"
-  (let [node (zip/node loc)]
-    (str (open-tag (:type node)) " " (:value node) " "
-         (close-tag (:type node)) "\n")))
-
-(defn xmlize [tree]
-  "Takes a zipped parse tree and outputs its xml representation"
-  (loop [loc tree, xml ""]
-    (if loc
-      (recur (zip/right loc)
-             (str xml (if (zip/branch? loc) (xml-branch loc) (xml-node loc))))
-      xml)))
-
 (defn parse-tree [filename]
   "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree"
-  (->> (slurp filename)
+  (->> filename
        (tokenize/tokens)
        (parse-class)
        (zip/root)))
 
-(defn xml-file [filename]
-  "Takes a xxx.jack filename, reads the file, tokenizes it, and write an
-  xxx-parse.xml file with the parse tree as xml"
-  (let [xml (xmlize (zipper-tree (parse-tree filename)))]
-    (file/write-string (file/make-parse-xml-filename filename) xml)))
 
 ;;; TESTING
-(deftest test-parse-class
-  (let [test-files [
-                    {:file "src/compiler/test/class.jack"
+(deftest test-parsers
+  (let [test-files [{:file "src/compiler/test/class.jack"
                     :cmp "src/compiler/test/class.xml"}
                     {:file "src/compiler/test/classVarDec.jack"
                      :cmp  "src/compiler/test/classVarDec.xml"}
                     ]
         test-cmp "../../../tools/TextComparer.sh"]
-    (doseq [x test-files] (xml-file (:file x))
-      (is (= "Comparison ended successfully\n"
-             (:out (shell/sh test-cmp (:cmp x)
-                             (file/make-parse-xml-filename (:file x)))))))))
+    (doseq [x test-files]
+      (let [filename (file/make-parse-xml-filename (:file x))]
+        (xml/tree-to-file filename (zipper-tree (parse-tree (:file x))))
+        (is (= "Comparison ended successfully\n"
+               (:out (shell/sh test-cmp (:cmp x) filename))))))))

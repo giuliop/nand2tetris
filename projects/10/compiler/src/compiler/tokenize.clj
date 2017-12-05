@@ -1,5 +1,6 @@
 (ns compiler.tokenize
  (:require [compiler.file :as file]
+           [compiler.xml :as xml]
            [clojure.java.shell :as shell]
            [clojure.test :refer :all]
            [clojure.string :as str]))
@@ -51,41 +52,13 @@
        (map remove-whitespace)
        (str/join "\n")))
 
-(defn tokens [program]
-  "Takes a program and returns a list of tokens in the form
-  {:type xxx, :value xxx}"
-  (let [program (clean program)
-        xs (re-seq #"\w+|[^\w\s\"]|\".*\"" program)]
-    (map #(hash-map :type (token-type %), :value %) xs)))
-
-(defn remove-quote [x]
-  "Takes a string of a string and removes the start and end quote"
-  (apply str (drop-last (drop 1 x))))
-
-(defn transform-tokens [token-type token]
-  "Takes a token and transform it if needed to conform to xml output"
-  (cond (= token-type "stringConstant") (remove-quote token)
-        (= token "<")"&lt;"
-        (= token ">") "&gt;"
-        (= token "&") "&amp;"
-        :else token))
-
-(defn write-xml [filename tokens]
-  "Takes a filename and a list of tokens and writes a filename.xml file with the
-  tokens"
-  (let [xml-token (fn [token]
-                    (let [{t :type, v :value} token
-                          v (transform-tokens t v)]
-                      (str "<" t ">" " " v " " "</" t ">")))
-        xml (list '("<tokens>") (map xml-token tokens) '("</tokens>"))]
-    (file/write filename xml)))
-
-(defn xml-file [filename]
-  "Takes a xxx.jack filename, reads the file and write an xxx-tokens.xml file
-   with the tokens in the input file"
+(defn tokens [filename]
+  "Takes a xxx.jack filename, tokenizes it, and outputs the list of tokens
+  in the form {:type _, :value _}"
   (->> (slurp filename)
-       (tokens)
-       (write-xml (file/make-token-xml-filename filename))))
+       (clean)
+       (re-seq #"\w+|[^\w\s\"]|\".*\"")                   ; the tokens
+       (map #(hash-map :type (token-type %), :value %)))) ; ({:type _, :value_},...)
 
 ;;; TESTING ;;;
 (deftest xml-file-test
@@ -94,10 +67,11 @@
                     {:file "../Square/SquareGame.jack" :cmp "../Square/SquareGameT.xml"}
                     {:file "../ArrayTest/Main.jack" :cmp "../ArrayTest/MainT.xml"}]
         test-cmp "../../../tools/TextComparer.sh"]
-    (doseq [x test-files] (xml-file (:file x))
-      (is (= "Comparison ended successfully\n"
-             (:out (shell/sh test-cmp (:cmp x)
-                             (file/make-token-xml-filename (:file x)))))))))
+    (doseq [x test-files]
+      (let [filename (file/make-token-xml-filename (:file x))]
+        (xml/tokens-to-file filename (tokens (:file x)))
+        (is (= "Comparison ended successfully\n"
+               (:out (shell/sh test-cmp (:cmp x) filename))))))))
 
 (deftest remove-whitespace-test
   (is (= (remove-whitespace " 3/2  /** comment  \n") "3/2"))
