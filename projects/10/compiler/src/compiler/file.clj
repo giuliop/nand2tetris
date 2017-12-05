@@ -3,6 +3,11 @@
             [clojure.java.io :as io]))
 
 
+(defn write-string [file-name string]
+  "Takes a filename and a string and writes it to file"
+  (with-open [w (clojure.java.io/writer file-name)]
+      (.write w string )))
+
 (defn write [file-name colls]
   "Takes a filename and a collection of collections of strings and writes them
   to file adding end of lines for each string"
