@@ -55,13 +55,13 @@
 
 (defn tokens [filename]
   "Takes a xxx.jack filename, tokenizes it, and outputs the list of tokens
-  in the form {:type _, :value _}"
-  (->> (slurp filename)
-       (str/split-lines)
-       (map remove-whitespace)
-       (map #(re-seq #"\w+|[^\w\s\"]|\".*\"" %))             ; the tokens per line
-       (map-indexed (fn [index token-seq] (map (partial make-token index) token-seq)))
-       (reduce concat)))
+  in the form {:type _, :value _ :line _}"
+  (transduce (comp
+               (map remove-whitespace)
+               (map #(re-seq #"\w+|[^\w\s\"]|\".*\"" %))             ; the tokens per line
+               (map-indexed (fn [index token-seq] (map (partial make-token index) token-seq))))
+             concat
+  (->> (slurp filename) (str/split-lines))))
 
 ;;; TESTING ;;;
 (deftest xml-file-test
