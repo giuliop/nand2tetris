@@ -36,9 +36,9 @@
     (some identity (map f tokens expected))))
 
 (defn consume [[tokens tree] & expected]
-  "Takes a list of tokens, a tree where to add the tokens and a list of expected
-  tokens to consume. Returns a vector of two elements: the list of tokens wihtout
-  the consummed one and the updated tree. Updates the tree with append-child"
+  "Takes a [list of tokens, a tree where to parse the tokens] and a list of
+  expected tokens to consume. Returns a [list of tokens not consumed,
+  the updated tree]. Updates the tree with append-child"
   (let [num_tokens (count (partition 2 expected))]
     (if-let [e (error? tokens expected)] (throw (Exception. e))
       [(drop num_tokens tokens)
@@ -47,7 +47,20 @@
 (defn consume-* [[tokens tree] & expected]
   "Like the function consume but can consume zero or more instances of expected"
     (if (error? tokens expected) [tokens tree]
-      (recur (apply (partial consume [tokens tree]) expected) expected)))
+      (recur (apply consume [tokens tree] expected) expected)))
+
+(defn consume-if [[tokens tree] pred & expected]
+  "Takes a [tokens tree] a predicate that test the [tokens tree] and some expected
+  tokens. If predicate is false returns the unchanged [tokens tree] if true calls
+  consume for tokens and the supplied parse function for parse-functions"
+  (if-not (pred [tokens tree])
+    [tokens tree]
+    (loop [[tokens tree] [tokens tree], expected expected]
+      (let [[k v & other] expected]
+        (case k
+          nil [tokens tree]
+          :parse-func (recur (v [tokens tree]) other)
+          (recur (apply consume [tokens tree] k v) other))))))
 
 (defn dispatch-if [[tokens tree] pred]
   "Takes a [tokens tree] and a predicate for the value of the first token. If true
@@ -178,116 +191,49 @@
 (defn parse-letStatement [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a letStatement"
-  (let [tree (-> tree
-                 (zip/append-child {:type "letStatement" :value []})
-                 (zip/down) (zip/rightmost)
-                 (zip/append-child (nth tokens 0))  ; let keyword
-                 (zip/append-child (nth tokens 1)))
-        [tokens tree]
-        (if (= (:value (nth tokens 2)) "[")      ; array
-          (let [[tokens tree] (parse-expression (drop 3 tokens)
-                                                (zip/append-child tree (nth tokens 2)))]
-                [(drop 1 tokens) (zip/append-child tree (nth tokens 0))]); ]
-          [(drop 2 tokens) tree])
-        [tokens tree] (parse-expression (drop 1 tokens)
-                                        (zip/append-child tree (nth tokens 0)))] ; =
-    ((dispatch (:value (second tokens))) (drop 1 tokens)
-     (-> tree (zip/append-child (first tokens)) (zip/up tree)))))  ; ;
+  (-> [tokens tree]
+      (tag-down "letStatement")
+      (consume :keyword "let" :identifier "!" :symbol "(")
+      (consume-if (not (error? tokens ["["])) :symbol "["
+                 :parse-func parse-expression :symbol "]")
+      (consume :symbol "=")
+      (parse-expression)
+      (consume :symbol ";")
+      (move-up)))
 
 (defn parse-ifStatement [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a ifStatement"
-  (let [tree (-> tree
-                 (zip/append-child {:type "ifStatement" :value []})
-                 (zip/down) (zip/rightmost)
-                 (zip/append-child (nth tokens 0))  ; if keyword
-                 (zip/append-child (nth tokens 1)))  ; (
-        [tokens tree] (parse-expression (drop 2 tokens) tree)
-        [tokens tree] (parse-Statements (drop 2 tokens)
-                                    (-> tree (zip/append-child (first tokens)) ; )
-                                        (zip/append-child (second tokens))))   ; {
-        [tokens tree] [(drop 1 tokens) (zip/append-child (first tokens))]      ; }
-        [tokens tree] (if (= (:value (first tokens)) "else")
-                        (let [[tokens tree]
-                          (parse-Statements (drop 2 tokens)
-                                            (-> tree (zip/append-child (first tokens)) ; else
-                                                (zip/append-child (second tokens))))] ; {
-                          [(drop 1 tokens) (zip/append-child (first tokens) tree )]) ; }
-                        [tokens tree])]
-    ((dispatch (:value (first tokens))) tokens (zip/up tree))))
+  (-> [tokens tree]
+      (tag-down "ifStatement")
+      (consume :keyword "if" :symbol "(")
+      (parse-expression)
+      (consume :symbol ")" :symbol "{")
+      (parse-statements)
+      (consume :symbol "}")
+      (consume-if (not (error? tokens [:keyword "else"])) :keyword "else"
+                 :symbol "{" :parse-func parse-statements :symbol "}")
+      (move-up)))
 
 (defn parse-whileStatement [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a whileStatement"
-  (let [tree (-> tree
-                 (zip/append-child {:type "whileStatement" :value []})
-                 (zip/down) (zip/rightmost)
-                 (zip/append-child (nth tokens 0))  ; while keyword
-                 (zip/append-child (nth tokens 1)))  ; (
-        [tokens tree] (parse-expression (drop 2 tokens) tree)
-        [tokens tree] (parse-Statements (drop 2 tokens)
-                                    (-> tree (zip/append-child (first tokens)) ; )
-                                        (zip/append-child (second tokens))))   ; {
-        [tokens tree] [(drop 1 tokens) (zip/append-child (first tokens))]]      ; }
-    ((dispatch (:value (first tokens))) tokens (zip/up tree))))
 
 (defn parse-expressionList [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming an expressionList"
-    (let [tree (-> tree
-                   (zip/append-child {:type "expressionList" :value []})
-                   (zip/down) (zip/rightmost))
-          [tokens tree] (if (= (:value (first tokens)) ")") [tokens tree]
-                          (let [[tokens tree] (parse-expression tokens tree)]
-                            (loop [[tokens tree] [tokens tree]]
-                              (if (= (:value (first tokens)) ",")
-                                (recur (parse-expression (drop 1 tokens)
-                                                         (zip/append-child (first tokens)))) ; ,
-                                [tokens tree]))))]
-      ((dispatch (:value (first tokens))) tokens (zip/up tree))))
-
 
 (defn parse-subroutineCall [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a subroutineCall"
-  (let [tree (-> tree
-                 (zip/append-child {:type "subroutineCall" :value []})
-                 (zip/down) (zip/rightmost))
-        [tokens tree] (if (= (:value (second tokens) ".")) ; it's a class method
-                        [(drop 2 tokens) (-> tree (zip/append-child (first tokens)) ; class|var name
-                                             (zip/append-child (second tokens)))] ; .
-                        [tokens tree])
-        [tokens tree] (parse-expressionList (drop 2 tokens) (-> tree
-                                                                (zip/append-child (first tokens)) ; subroutine name
-                                                                (zip/append-child (second tokens)))) ; (
-        [tokens tree] [(drop 1 tokens) (zip/append-child tree (first tokens))]] ; )
-    ((dispatch (:value (first tokens))) tokens (zip/up tree))))
-
 
 (defn parse-doStatement [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a doStatement"
-  (let [tree (-> tree
-                 (zip/append-child {:type "doStatement" :value []})
-                 (zip/down) (zip/rightmost)
-                 (zip/append-child (nth tokens 0))) ; do keyword
-        [tokens tree] (parse-subroutineCall (drop 1 tokens) tree)]
-    ((dispatch (:value (second tokens))) (drop 1 tokens)
-     (-> tree (zip/append-child (first tokens)) (zip/up tree)))))   ; ;
 
 (defn parse-returnStatement [tokens tree]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a returnStatement"
-  (let [tree (-> tree
-                 (zip/append-child {:type "returnStatement" :value []})
-                 (zip/down) (zip/rightmost)
-                 (zip/append-child (nth tokens 0))) ; return keyword
-        [tokens tree] (if-not (= (:value (first tokens)) ";")
-                        (parse-expression tokens tree)
-                        [tokens tree])]
-    ((dispatch (:value (second tokens))) (drop 1 tokens)
-     (-> tree (zip/append-child (first tokens)) (zip/up tree)))))   ; ;
-
 
 (def dispatch {"static" parse-classVarDec
                "field" parse-classVarDec
