@@ -60,7 +60,7 @@
         (case k
           nil [tokens tree]
           :parse-func (recur (v [tokens tree]) other)
-          (recur (apply consume [tokens tree] k v) other))))))
+          (recur (consume [tokens tree] k v) other))))))
 
 (defn dispatch-if [[tokens tree] pred]
   "Takes a [tokens tree] and a predicate for the value of the first token. If true
@@ -168,40 +168,51 @@
       (move-up)
       (dispatch-if #(not= "}" %))))
 
-; refactored up to here
-
-(defn is-op [token]
+(defn op? [token]
   (contains? #{"+" "-" "*" "/" "&" "|" "<" ">" "="} (:value token)))
 
-(defn parse-term [tokens tree])
+(defn parse-term [[tokens tree]]
+  "Takes tokens to parse and tree so far and returns tokens not consumed and
+  updated tree consuming a term"
+  (let [cnsm (partial consume [tokens tree])]
+    (case (:type (first tokens))
+      ("integerConstant" "stringConstant") (cnsm [:integerConstant :stringConstant] "!")
+      "keyword" (cnsm :keyword ["true" "false" "null" "this"])
+      "identifier" (cond (not (error? (drop 1 tokens) [:symbol "["]))
+                          (-> (cnsm :identifier "!" :symbol "[")
+                              (parse-expression)
+                              (consume :symbol "]"))
+                        (not (error? (drop 1 tokens) [:symbol "("]))
+                          (parse-subroutineCall [tokens tree])
+                        :else (cnsm :identifier "!"))
+      "symbol" (if (not (error? tokens [:symbol "("]))
+                (-> (cnsm :symbol "(") (parse-expression) (consume :symbol ")"))
+                (recur (cnsm :symbol ["-" "~"]))))))
 
-(defn parse-expression [tokens tree]
+(defn parse-expression [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming an expression"
-  (let [tree (-> tree
-                 (zip/append-child {:type "expression" :value []})
-                 (zip/down) (zip/rightmost))
-        [tokens tree] (parse-term tokens tree)]
-    (loop [[tokens tree] [tokens tree]]
-      (if-not (is-op (first tokens))
-        [tokens (zip/up tree)]
-        (recur (parse-expression (drop 1 tokens)
-                                 (zip/append-child tree (first tokens)))))))) ; op
+  (loop [[tokens tree] (-> [tokens tree] (tag-down "expression") (parse-term))]
+     (if-not (op? (first tokens))
+      (move-up [tokens tree])
+      (recur (-> [tokens tree]
+                 (consume :symbol ["+" "-" "*" "/" "&" "|" "<" ">" "="])
+                 (parse-term))))))
 
-(defn parse-letStatement [tokens tree]
-  "Takes tokens to parse and tree so far and returns tokens not consumed and
+(defn parse-letStatement [[tokens tree]]
+  "Takes tokens to parse [and tree so far and returns tokens not consumed and
   updated tree consuming a letStatement"
   (-> [tokens tree]
       (tag-down "letStatement")
-      (consume :keyword "let" :identifier "!" :symbol "(")
-      (consume-if (not (error? tokens ["["])) :symbol "["
+      (consume :keyword "let" :identifier "!")
+      (consume-if #(not (error? % [:symbol "["])) :symbol "["
                  :parse-func parse-expression :symbol "]")
       (consume :symbol "=")
       (parse-expression)
       (consume :symbol ";")
       (move-up)))
 
-(defn parse-ifStatement [tokens tree]
+(defn parse-ifStatement [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a ifStatement"
   (-> [tokens tree]
@@ -215,32 +226,67 @@
                  :symbol "{" :parse-func parse-statements :symbol "}")
       (move-up)))
 
-(defn parse-whileStatement [tokens tree]
+(defn parse-whileStatement [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a whileStatement"
+  (-> [tokens tree]
+      (tag-down "whileStatement")
+      (consume :keyword "while" :symbol "(")
+      (parse-expression)
+      (consume :symbol ")" :symbol "{")
+      (parse-statements)
+      (consume :symbol "}")
+      (move-up)))
 
-(defn parse-expressionList [tokens tree]
+(defn parse-expressionList [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming an expressionList"
+  (loop [[tokens tree] (-> [tokens tree]
+                           (tag-down "expressionList")
+                           (parse-expression))]
+    (if (error? tokens [:symbol ","])
+      (move-up [tokens tree])
+      (recur (-> [tokens tree] (consume :symbol ",") (parse-expression))))))
 
-(defn parse-subroutineCall [tokens tree]
+(defn parse-subroutineCall [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a subroutineCall"
+  (-> [tokens tree]
+      (tag-down "subroutineCall")
+      (consume-if #(let [[tokens tree] %]
+                     (not (error? tokens [:identifier "!" :symbol "."])))
+                  :identifier "!" :symbol ".")
+      (consume :identifier "!" :symbol "(")
+      (parse-expressionList)
+      (consume :symbol ")")
+      (move-up)))
 
-(defn parse-doStatement [tokens tree]
+(defn parse-doStatement [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a doStatement"
+  (-> [tokens tree]
+      (tag-down "doStatement")
+      (consume :keyword "do")
+      (parse-subroutineCall)
+      (consume :symbol ";")
+      (move-up)))
 
-(defn parse-returnStatement [tokens tree]
+(defn parse-returnStatement [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a returnStatement"
+  (-> [tokens tree]
+      (tag-down "returnStatement")
+      (consume :keyword "return")
+      (consume-if (error? tokens [:symbol ";"]) :parse-func parse-expression)
+      (consume :symbol ";")
+      (move-up)))
+
 
 (def dispatch {"static" parse-classVarDec
                "field" parse-classVarDec
                "constructor" parse-subroutineDec
                "function" parse-subroutineDec
                "method" parse-subroutineDec
-               "var" parse-varDec
                "let" parse-letStatement
                "if" parse-ifStatement
                "while" parse-whileStatement
@@ -262,6 +308,8 @@
                      :cmp "src/compiler/test/class.xml"}
                     {:file "src/compiler/test/classVarDec.jack"
                      :cmp  "src/compiler/test/classVarDec.xml"}
+                    {:file "src/compiler/test/Main.jack"
+                     :cmp  "src/compiler/test/Main.xml"}
                     ]
         test-cmp "../../../tools/TextComparer.sh"]
     (doseq [x test-files]
