@@ -37,8 +37,11 @@
         :else "error"))
 
 (def re-without-comment #"\A([^/]|/(?![/*]))*")
+
 (defn comment-line? [line]
+  "Returns whether the line is a comment line"
   (contains? #{\/ \*} (first (str/trim line))))
+
 (defn remove-whitespace [line]
   "Takes a line, removes comments and leading/trailing whitespaces"
   (if (comment-line? line) ""
@@ -46,19 +49,19 @@
          (str "") ; to make a nil an empty string
          (str/trim))))
 
-(defn clean [program]
-  "Takes a program and removes comments"
-  (->> (str/split-lines program)
-       (map remove-whitespace)
-       (str/join "\n")))
+(defn make-token [line-num value]
+  "Returns a token as a map of line-num, token type and token value"
+  (hash-map :line line-num :type (token-type value) :value value))
 
 (defn tokens [filename]
   "Takes a xxx.jack filename, tokenizes it, and outputs the list of tokens
   in the form {:type _, :value _}"
   (->> (slurp filename)
-       (clean)
-       (re-seq #"\w+|[^\w\s\"]|\".*\"")                   ; the tokens
-       (map #(hash-map :type (token-type %), :value %)))) ; ({:type _, :value_},...)
+       (str/split-lines)
+       (map remove-whitespace)
+       (map #(re-seq #"\w+|[^\w\s\"]|\".*\"" %))             ; the tokens per line
+       (map-indexed (fn [index token-seq] (map (partial make-token index) token-seq)))
+       (reduce concat)))
 
 ;;; TESTING ;;;
 (deftest xml-file-test
