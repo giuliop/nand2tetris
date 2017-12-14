@@ -28,8 +28,9 @@
               (if (and (some #{(:type t), "!"} exp_types)
                        (some #{(:value t), "!"} exp_values))
                 nil
-                (str "Syntax error. Expecting: " [:type exp_types :value exp_values]
-                     " - " "Found: " t "\n"))))
+                (str "Syntax error at line " (:line t) ". Expecting: "
+                     [:type exp_types :value exp_values] " - "
+                     "Found: " [:type (:type t) :value (:value t)] "\n"))))
         expected (partition 2 expected)
         num_tokens (count expected)
         tokens (take num_tokens tokens)]
@@ -40,7 +41,7 @@
   expected tokens to consume. Returns a [list of tokens not consumed,
   the updated tree]. Updates the tree with append-child"
   (let [num_tokens (count (partition 2 expected))]
-    (if-let [e (error? tokens expected)] (throw (Exception. e))
+    (if-let [e (error? tokens expected)] (throw (UnsupportedOperationException. e))
       [(drop num_tokens tokens)
        (reduce zip/append-child tree (take num_tokens tokens))])))
 
@@ -50,10 +51,10 @@
       (recur (apply consume [tokens tree] expected) expected)))
 
 (defn consume-if [[tokens tree] pred & expected]
-  "Takes a [tokens tree] a predicate that test the [tokens tree] and some expected
+  "Takes a [tokens tree] a predicate that test the tokens and some expected
   tokens. If predicate is false returns the unchanged [tokens tree] if true calls
   consume for tokens and the supplied parse function for parse-functions"
-  (if-not (pred [tokens tree])
+  (if-not (pred tokens)
     [tokens tree]
     (loop [[tokens tree] [tokens tree], expected expected]
       (let [[k v & other] expected]
@@ -83,11 +84,11 @@
 
 (defn parse-class [tokens]
   "Takes a list of tokens representing a class and returns the parse tree"
-  (-> [tokens (zipper-tree {:type "class" :value []})]
-      (consume :keyword "class"  :identifier "!"  :symbol "{")
-      (dispatch-if #(not= "}" %))
-      (consume :symbol "}")
-      (second)))
+    (-> [tokens (zipper-tree {:type "class" :value []})]
+        (consume :keyword "class"  :identifier "!"  :symbol "{")
+        (dispatch-if #(not= "}" %))
+        (consume :symbol "}")
+        (second)))
 
 (defn parse-classVarDec [[tokens tree]]
   "Takes tokens to parse starting with class variable declarations and the parse
@@ -145,9 +146,9 @@
 (defn parse-parameterList-? [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a paramaeter list"
-  (let [[tokens tree] (tag-down [tokens tree] "paramaeterList")]
-    (if (error? tokens [:symbol "("])
-      [tokens tree]
+  (let [[tokens tree] (tag-down [tokens tree] "parameterList")]
+    (if-not (error? tokens [:symbol ")"])
+      (move-up [tokens tree])
       (-> (consume [tokens tree] [:keyword, :identifier] ["int" "char" "boolean" "!"]
                    :identifier "!")
           (consume-* :symbol "," [:keyword, :identifier] ["int" "char" "boolean" "!"]
@@ -171,27 +172,10 @@
 (defn op? [token]
   (contains? #{"+" "-" "*" "/" "&" "|" "<" ">" "="} (:value token)))
 
-(defn parse-term [[tokens tree]]
-  "Takes tokens to parse and tree so far and returns tokens not consumed and
-  updated tree consuming a term"
-  (let [cnsm (partial consume [tokens tree])]
-    (case (:type (first tokens))
-      ("integerConstant" "stringConstant") (cnsm [:integerConstant :stringConstant] "!")
-      "keyword" (cnsm :keyword ["true" "false" "null" "this"])
-      "identifier" (cond (not (error? (drop 1 tokens) [:symbol "["]))
-                          (-> (cnsm :identifier "!" :symbol "[")
-                              (parse-expression)
-                              (consume :symbol "]"))
-                        (not (error? (drop 1 tokens) [:symbol "("]))
-                          (parse-subroutineCall [tokens tree])
-                        :else (cnsm :identifier "!"))
-      "symbol" (if (not (error? tokens [:symbol "("]))
-                (-> (cnsm :symbol "(") (parse-expression) (consume :symbol ")"))
-                (recur (cnsm :symbol ["-" "~"]))))))
-
 (defn parse-expression [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming an expression"
+  (declare parse-term)
   (loop [[tokens tree] (-> [tokens tree] (tag-down "expression") (parse-term))]
      (if-not (op? (first tokens))
       (move-up [tokens tree])
@@ -222,7 +206,7 @@
       (consume :symbol ")" :symbol "{")
       (parse-statements)
       (consume :symbol "}")
-      (consume-if (not (error? tokens [:keyword "else"])) :keyword "else"
+      (consume-if #(not (error? % [:keyword "else"])) :keyword "else"
                  :symbol "{" :parse-func parse-statements :symbol "}")
       (move-up)))
 
@@ -241,25 +225,23 @@
 (defn parse-expressionList [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming an expressionList"
-  (loop [[tokens tree] (-> [tokens tree]
-                           (tag-down "expressionList")
-                           (parse-expression))]
-    (if (error? tokens [:symbol ","])
+  (let [[tokens tree] (-> [tokens tree] (tag-down "expressionList"))]
+    (if-not (error? tokens [:symbol ")"])
       (move-up [tokens tree])
-      (recur (-> [tokens tree] (consume :symbol ",") (parse-expression))))))
+      (loop [[tokens tree] (parse-expression [tokens tree])]
+        (if (error? tokens [:symbol ","])
+          (move-up [tokens tree])
+          (recur (-> [tokens tree] (consume :symbol ",") (parse-expression))))))))
 
 (defn parse-subroutineCall [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
   updated tree consuming a subroutineCall"
   (-> [tokens tree]
-      (tag-down "subroutineCall")
-      (consume-if #(let [[tokens tree] %]
-                     (not (error? tokens [:identifier "!" :symbol "."])))
+      (consume-if #(not (error? % [:identifier "!" :symbol "."]))
                   :identifier "!" :symbol ".")
       (consume :identifier "!" :symbol "(")
       (parse-expressionList)
-      (consume :symbol ")")
-      (move-up)))
+      (consume :symbol ")")))
 
 (defn parse-doStatement [[tokens tree]]
   "Takes tokens to parse and tree so far and returns tokens not consumed and
@@ -277,10 +259,29 @@
   (-> [tokens tree]
       (tag-down "returnStatement")
       (consume :keyword "return")
-      (consume-if (error? tokens [:symbol ";"]) :parse-func parse-expression)
+      (consume-if #(error? % [:symbol ";"]) :parse-func parse-expression)
       (consume :symbol ";")
       (move-up)))
 
+(defn parse-term [[tokens tree]]
+  "Takes tokens to parse and tree so far and returns tokens not consumed and
+  updated tree consuming a term"
+  (let [[tokens tree] (tag-down [tokens tree] "term")
+        cnsm (partial consume [tokens tree])]
+    (move-up
+    (case (:type (first tokens))
+      ("integerConstant" "stringConstant") (cnsm [:integerConstant :stringConstant] "!")
+      "keyword" (cnsm :keyword ["true" "false" "null" "this"])
+      "identifier" (cond (not (error? (drop 1 tokens) [:symbol "["]))
+                         (-> (cnsm :identifier "!" :symbol "[")
+                             (parse-expression)
+                             (consume :symbol "]"))
+                         (not (error? (drop 1 tokens) [:symbol ["(" "."]]))
+                         (parse-subroutineCall [tokens tree])
+                         :else (cnsm :identifier "!"))
+      "symbol" (if (not (error? tokens [:symbol "("]))
+                 (-> (cnsm :symbol "(") (parse-expression) (consume :symbol ")"))
+                 (parse-term (cnsm :symbol ["-" "~"])))))))
 
 (def dispatch {"static" parse-classVarDec
                "field" parse-classVarDec
@@ -291,29 +292,33 @@
                "if" parse-ifStatement
                "while" parse-whileStatement
                "do" parse-doStatement
-               "return" parse-returnStatement
-               })
+               "return" parse-returnStatement })
 
 (defn parse-tree [filename]
-  "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree"
-  (->> filename
-       (tokenize/tokens)
-       (parse-class)
-       (zip/root)))
+  "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree
+  or an error message if there was a syntax error"
+  (let [tokens (tokenize/tokens filename)
+        tree (try
+               (parse-class tokens)
+               (catch UnsupportedOperationException e (str (.getMessage e))))]
+    (if (string? tree)
+      (println tree)
+       (zip/root tree))))
 
 
 ;;; TESTING
 (deftest test-parsers
-  (let [test-files [{:file "src/compiler/test/class.jack"
-                     :cmp "src/compiler/test/class.xml"}
-                    {:file "src/compiler/test/classVarDec.jack"
-                     :cmp  "src/compiler/test/classVarDec.xml"}
-                    {:file "src/compiler/test/Main.jack"
-                     :cmp  "src/compiler/test/Main.xml"}
+  (let [test-files ["src/compiler/test/class.jack"
+                    "src/compiler/test/classVarDec.jack"
+                    "src/compiler/test/noExpSquare/Main.jack"
+                    "src/compiler/test/noExpSquare/Square.jack"
+                    "src/compiler/test/array/Main.jack"
                     ]
         test-cmp "../../../tools/TextComparer.sh"]
     (doseq [x test-files]
-      (let [filename (file/make-parse-xml-filename (:file x))]
-        (xml/tree-to-file filename (zipper-tree (parse-tree (:file x))))
+      (let [filename (file/make-parse-xml-filename x)
+            cmp-file (str (subs x 0 (- (count x) 4)) "xml")]
+        (xml/tree-to-file filename (zipper-tree (parse-tree x)))
         (is (= "Comparison ended successfully\n"
-               (:out (shell/sh test-cmp (:cmp x) filename))))))))
+               (:out (shell/sh test-cmp cmp-file filename))))))))
+

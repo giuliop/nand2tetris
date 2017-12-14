@@ -4,14 +4,9 @@
 
 ;;; xml helper for the tokenizer
 
-(defn remove-quote [x]
-  "Takes a string of a string and removes the start and end quote"
-  (apply str (drop-last (drop 1 x))))
-
 (defn transform-tokens [token-type token]
   "Takes a token and transform it if needed to conform to xml output"
-  (cond (= token-type "stringConstant") (remove-quote token)
-        (= token "<")"&lt;"
+  (cond (= token "<")"&lt;"
         (= token ">") "&gt;"
         (= token "&") "&amp;"
         :else token))

@@ -49,9 +49,19 @@
          (str "") ; to make a nil an empty string
          (str/trim))))
 
+(defn remove-quote [x]
+  "Takes a string of a string and removes the start and end quote"
+  (apply str (drop-last (drop 1 x))))
+
+(defn transform-token [t]
+  "Takes a token value and applies any needed transformation"
+  (cond (= (:type t) "stringConstant") (assoc t :value (remove-quote (:value t)))
+        :else t))
+
 (defn make-token [line-num value]
   "Returns a token as a map of line-num, token type and token value"
-  (hash-map :line line-num :type (token-type value) :value value))
+  (-> (hash-map :line (inc line-num) :type (token-type value) :value value)
+      (transform-token)))
 
 (defn tokens [filename]
   "Takes a xxx.jack filename, tokenizes it, and outputs the list of tokens
