@@ -4,12 +4,12 @@
 
 ;;; xml helper for the tokenizer
 
-(defn transform-tokens [token-type token]
-  "Takes a token and transform it if needed to conform to xml output"
-  (cond (= token "<")"&lt;"
-        (= token ">") "&gt;"
-        (= token "&") "&amp;"
-        :else token))
+(defn transform-value [token-value]
+  "Takes a token-value and transform it if needed to conform to xml output"
+  (cond (= token-value "<") "&lt;"
+        (= token-value ">") "&gt;"
+        (= token-value "&") "&amp;"
+        :else token-value))
 
 (defn tokens-to-file [filename tokens]
   "Takes a filename and a list of tokens and writes a filename.xml file with the
@@ -45,7 +45,7 @@
 (defn xml-node [loc]
   "Takes a zipped tree at a node and outputs its xml code"
   (let [node (zip/node loc)]
-    (str (open-tag (:type node)) " " (:value node) " "
+    (str (open-tag (:type node)) " " (transform-value (:value node)) " "
          (close-tag (:type node)) "\n")))
 
 (defn xmlize [tree]

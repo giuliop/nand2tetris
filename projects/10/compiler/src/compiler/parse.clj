@@ -312,7 +312,11 @@
                     "src/compiler/test/classVarDec.jack"
                     "src/compiler/test/noExpSquare/Main.jack"
                     "src/compiler/test/noExpSquare/Square.jack"
+                    "src/compiler/test/noExpSquare/SquareGame.jack"
                     "src/compiler/test/array/Main.jack"
+                    "src/compiler/test/square/Main.jack"
+                    "src/compiler/test/square/Square.jack"
+                    "src/compiler/test/square/SquareGame.jack"
                     ]
         test-cmp "../../../tools/TextComparer.sh"]
     (doseq [x test-files]
