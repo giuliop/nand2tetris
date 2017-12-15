@@ -1,9 +1,6 @@
 (ns compiler.parse
-
  (:require [compiler.file :as file]
            [compiler.tokenize :as tokenize]
-           [compiler.xml :as xml]
-           [clojure.java.shell :as shell]
            [clojure.test :refer :all]
            [clojure.zip :as zip]
            [clojure.string :as str]))
@@ -294,7 +291,7 @@
                "do" parse-doStatement
                "return" parse-returnStatement })
 
-(defn parse-tree [filename]
+(defn tree [filename]
   "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree
   or an error message if there was a syntax error"
   (let [tokens (tokenize/tokens filename)
