@@ -16,7 +16,7 @@
   tokens"
   (let [xml-token (fn [token]
                     (let [{t :type, v :value} token
-                          v (transform-tokens t v)]
+                          v (transform-value v)]
                       (str "<" t ">" " " v " " "</" t ">")))
         xml (list '("<tokens>") (map xml-token tokens) '("</tokens>"))]
     (file/write filename xml)))
