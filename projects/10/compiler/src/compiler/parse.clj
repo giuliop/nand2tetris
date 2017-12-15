@@ -307,7 +307,7 @@
 
 
 ;;; TESTING
-(deftest test-parsers
+(deftest test-parsers-xml
   (let [test-files ["src/compiler/test/class.jack"
                     "src/compiler/test/classVarDec.jack"
                     "src/compiler/test/noExpSquare/Main.jack"
