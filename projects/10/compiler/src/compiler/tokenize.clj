@@ -50,7 +50,7 @@
          (str/trim))))
 
 (defn remove-quote [x]
-  "Takes a string of a string and removes the start and end quote"
+  "Takes a quoted string and removes the start and end quote"
   (apply str (drop-last (drop 1 x))))
 
 (defn transform-token [t]
@@ -64,7 +64,7 @@
       (transform-token)))
 
 (defn tokens [filename]
-  "Takes a xxx.jack filename, tokenizes it, and outputs the list of tokens
+  "Takes a .jack filename, tokenizes it, and outputs the list of tokens
   in the form {:type _, :value _ :line _}"
   (transduce (comp
                (map remove-whitespace)
