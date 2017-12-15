@@ -305,24 +305,3 @@
       (println tree)
        (zip/root tree))))
 
-
-;;; TESTING
-(deftest test-parsers-xml
-  (let [test-files ["src/compiler/test/class.jack"
-                    "src/compiler/test/classVarDec.jack"
-                    "src/compiler/test/noExpSquare/Main.jack"
-                    "src/compiler/test/noExpSquare/Square.jack"
-                    "src/compiler/test/noExpSquare/SquareGame.jack"
-                    "src/compiler/test/array/Main.jack"
-                    "src/compiler/test/square/Main.jack"
-                    "src/compiler/test/square/Square.jack"
-                    "src/compiler/test/square/SquareGame.jack"
-                    ]
-        test-cmp "../../../tools/TextComparer.sh"]
-    (doseq [x test-files]
-      (let [filename (file/make-parse-xml-filename x)
-            cmp-file (str (subs x 0 (- (count x) 4)) "xml")]
-        (xml/tree-to-file filename (zipper-tree (parse-tree x)))
-        (is (= "Comparison ended successfully\n"
-               (:out (shell/sh test-cmp cmp-file filename))))))))
-

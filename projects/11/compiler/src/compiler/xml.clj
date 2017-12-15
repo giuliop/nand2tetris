@@ -1,5 +1,7 @@
 (ns compiler.xml
   (:require [compiler.file :as file]
+            [clojure.tokenize :as tokenize]
+            [clojure.parse :as parse]
             [clojure.zip :as zip]))
 
 ;;; xml helper for the tokenizer
@@ -60,3 +62,37 @@
   "Takes a zipped parse tree an writes its xml representation to filename"
   (let [xml (xmlize tree)]
     (file/write-string filename xml)))
+
+
+;;; TESTING ;;;
+
+(deftest xml-tokenize-test
+  (let [test-files [{:file "../Square/Main.jack" :cmp "../Square/MainT.xml"}
+                    {:file "../Square/Square.jack" :cmp "../Square/SquareT.xml"}
+                    {:file "../Square/SquareGame.jack" :cmp "../Square/SquareGameT.xml"}
+                    {:file "../ArrayTest/Main.jack" :cmp "../ArrayTest/MainT.xml"}]
+        test-cmp "../../../tools/TextComparer.sh"]
+    (doseq [x test-files]
+      (let [filename (file/make-token-xml-filename (:file x))]
+        (xml/tokens-to-file filename (tokenize/tokens (:file x)))
+        (is (= "Comparison ended successfully\n"
+               (:out (shell/sh test-cmp (:cmp x) filename))))))))
+
+(deftest xml-parsers-test
+  (let [test-files ["src/compiler/test/class.jack"
+                    "src/compiler/test/classVarDec.jack"
+                    "src/compiler/test/noExpSquare/Main.jack"
+                    "src/compiler/test/noExpSquare/Square.jack"
+                    "src/compiler/test/noExpSquare/SquareGame.jack"
+                    "src/compiler/test/array/Main.jack"
+                    "src/compiler/test/square/Main.jack"
+                    "src/compiler/test/square/Square.jack"
+                    "src/compiler/test/square/SquareGame.jack"
+                    ]
+        test-cmp "../../../tools/TextComparer.sh"]
+    (doseq [x test-files]
+      (let [filename (file/make-parse-xml-filename x)
+            cmp-file (str (subs x 0 (- (count x) 4)) "xml")]
+        (xml/tree-to-file filename (parse/zipper-tree (parse-tree x)))
+        (is (= "Comparison ended successfully\n"
+               (:out (shell/sh test-cmp cmp-file filename))))))))

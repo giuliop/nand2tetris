@@ -1,6 +1,5 @@
 (ns compiler.tokenize
  (:require [compiler.file :as file]
-           [compiler.xml :as xml]
            [clojure.java.shell :as shell]
            [clojure.test :refer :all]
            [clojure.string :as str]))
@@ -73,21 +72,3 @@
              concat
   (->> (slurp filename) (str/split-lines))))
 
-;;; TESTING ;;;
-(deftest xml-file-test
-  (let [test-files [{:file "../Square/Main.jack" :cmp "../Square/MainT.xml"}
-                    {:file "../Square/Square.jack" :cmp "../Square/SquareT.xml"}
-                    {:file "../Square/SquareGame.jack" :cmp "../Square/SquareGameT.xml"}
-                    {:file "../ArrayTest/Main.jack" :cmp "../ArrayTest/MainT.xml"}]
-        test-cmp "../../../tools/TextComparer.sh"]
-    (doseq [x test-files]
-      (let [filename (file/make-token-xml-filename (:file x))]
-        (xml/tokens-to-file filename (tokens (:file x)))
-        (is (= "Comparison ended successfully\n"
-               (:out (shell/sh test-cmp (:cmp x) filename))))))))
-
-(deftest remove-whitespace-test
-  (is (= (remove-whitespace " 3/2  /** comment  \n") "3/2"))
-  (is (= (remove-whitespace "   * comment  \n") ""))
-  (is (= (remove-whitespace "// comment  \n") ""))
-  (is (= (remove-whitespace "   3 / 2  // comment  \n") "3 / 2")))
