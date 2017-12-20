@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]))
 
-
 (defn write-string [file-name string]
   "Takes a filename and a string and writes it to file"
   (with-open [w (clojure.java.io/writer file-name)]
@@ -25,11 +24,15 @@
   "Takes a xxx.jack filename and returns a xxx-parse.xml filename"
   (str (last (re-find #"(.*)\.jack" jack-filename)) "-parse.xml"))
 
+(defn rename-to-vm [file-or-dir-name]
+  "If given a filename ending in .jack returns a name with the suffix changed
+  to .vm, otherwise appends .vm to the name"
+  (let [radix-jack-file (last (re-find #"(.*)\.jack" file-or-dir-name))]
+    (if radix-jack-file (str radix-jack-file ".vm")
+      (str file-or-dir-name ".vm"))))
 
-
-
-(defn vm-file? [file-name]
-  (= ".vm" (apply str (take-last 3 file-name))))
+(defn ext-file? [ext file-name]
+  (= ext (apply str (take-last (count ext) file-name))))
 
 (defn add-slash-dir [dir-name]
   (if (= \/ (last dir-name)) dir-name
@@ -38,28 +41,23 @@
 (defn add-path-to-filename [path file-name]
     (str (add-slash-dir path) file-name))
 
+(defn list-files [ext file-or-dir-name]
+  "If given a file name returns it if its extension is ext, if given a
+  directory name returns the names of all the .ext files in it"
+  (let [ext-file? (partial ext-file? ext)]
+    (when (.exists (io/file file-or-dir-name))
+      (if (.isDirectory (io/file file-or-dir-name))
+        (map (partial add-path-to-filename file-or-dir-name)
+             (filter ext-file? (.list (io/file file-or-dir-name))))
+            (when (ext-file? file-or-dir-name) (list file-or-dir-name))))))
+
+
+
+
+
+
 (defn remove-path-from-vm-filename [file-name]
   (last (re-find #"([^/]*.vm)$" file-name)))
-
-(defn rename-to-asm [file-or-dir-name]
-  "If given a filename ending in .vm returns a name with the suffix changed
-  to .asm, otherwise appends .vm to the name (putting it inside the directory if
-  the input is a directory)"
-  (let [radix-vm-file (last (re-find #"(.*)\.vm" file-or-dir-name))
-        lastdir (last (re-find #"([^/]*)/?$" file-or-dir-name))]
-    (cond radix-vm-file (str radix-vm-file ".asm")
-          (.isDirectory (io/file file-or-dir-name))
-             (add-path-to-filename file-or-dir-name (str lastdir ".asm"))
-          :else (str file-or-dir-name ".asm"))))
-
-(defn list-vm-files [file-or-dir-name]
-  "If given a file name returns it if it is a .vm file, if given a
-  directory name returns the names of all the .vm files in it"
-  (when (.exists (io/file file-or-dir-name))
-    (if (.isDirectory (io/file file-or-dir-name))
-      (map (partial add-path-to-filename file-or-dir-name)
-           (filter vm-file? (.list (io/file file-or-dir-name))))
-      (when (vm-file? file-or-dir-name) (list file-or-dir-name)))))
 
 (defn radix [filename]
   "Takes a filename and remove directory path and extension"
