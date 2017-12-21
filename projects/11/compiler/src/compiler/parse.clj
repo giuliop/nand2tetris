@@ -293,7 +293,7 @@
 
 (defn tree [filename]
   "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree
-  or an error message if there was a syntax error"
+  or nil printing an error message if there was a syntax error"
   (let [tokens (tokenize/tokens filename)
         tree (try
                (parse-class tokens)
