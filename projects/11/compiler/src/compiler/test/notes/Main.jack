@@ -1,0 +1,16 @@
+class Main {
+
+    function void main() {
+        var Summer s;
+        var Int c;
+        
+        let s = Summer.new(8,2);
+        let c = s.sum();
+
+        do s.dispose();
+
+        do Output.printInt(c);
+        do Output.println();
+        return;
+    }
+}

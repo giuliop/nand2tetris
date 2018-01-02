@@ -1,0 +1,19 @@
+function Main.main 1
+push constant 4
+call String.new 1
+push constant 99
+call String.appendChar 2
+push constant 105
+call String.appendChar 2
+push constant 97
+call String.appendChar 2
+push constant 111
+call String.appendChar 2
+pop local 0
+push local 0
+call Output.printString 1
+pop temp 0
+call Output.println 0
+pop temp 0
+push constant 0
+return

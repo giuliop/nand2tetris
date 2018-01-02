@@ -1,0 +1,22 @@
+function Main.main 2
+
+push constant 8
+push constant 2
+call Summer.new 2
+pop local 0
+
+push local 0
+call Summer.sum 1
+pop local 1
+
+push local 0
+call Summer.dispose 1
+pop temp 0
+
+push local 1
+call Output.printInt 1
+pop temp 0
+call Output.println 0
+pop temp 0
+push constant 0
+return

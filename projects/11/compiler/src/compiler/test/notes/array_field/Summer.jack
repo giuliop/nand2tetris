@@ -1,0 +1,23 @@
+class Summer {
+
+   field Array a;
+
+   constructor Summer new(int Ax, int Ay) {
+      let a = Array.new(2);
+      let a[0] = Ax;
+      let a[1] = Ay;
+      return this;
+   }
+
+   method Int sum() {
+      return a[0] + a[1];
+   }
+        
+   /** Disposes this square. */
+   method void dispose() {
+      do a.dispose();
+      do Memory.deAlloc(this);
+      return;
+   }
+}
+

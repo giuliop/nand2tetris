@@ -292,13 +292,37 @@
                "return" parse-returnStatement })
 
 (defn tree [filename]
-  "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree
-  or nil printing an error message if there was a syntax error"
+  "Takes a xxx.jack filename, tokenizes it, and returns the (unzipped) parse tree
+  or string with a syntax error"
   (let [tokens (tokenize/tokens filename)
         tree (try
                (parse-class tokens)
                (catch UnsupportedOperationException e (str (.getMessage e))))]
     (if (string? tree)
+      tree
+      (zip/root tree))))
+
+(defn tree-with-error-printing [filename]
+  "Takes a xxx.jack filename, tokenizes it, and outputs the (unzipped) parse tree
+  or nil printing an error message if there was a syntax error"
+  (let [tree (tree filename)]
+    (if (string? tree)
       (println tree)
-       (zip/root tree))))
+       tree)))
+
+(defn classname [tree]
+  "Takes an unzipped tree representing a class and returns the class name"
+  (-> (zipper-tree tree) (zip/down) (zip/right) (zip/node) (:value)))
+
+(defn class-variables [tree]
+  "Takes an unzipped tree representing a class and returns the class variables"
+  (let [varDec? (fn [node] (= "classVarDec" (:type node)))]
+    (->> (zipper-tree tree) (zip/children) (filter varDec?))))
+
+(defn class-functions [tree]
+  "Takes an unzipped tree representing a class and returns the class functions"
+  (let [subroutineDec? (fn [node] (= "subroutineDec" (:type node)))]
+    (->> (zipper-tree tree) (zip/children) (filter subroutineDec?))))
+
+;class-funcs (parse/class-functions tree)
 

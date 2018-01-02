@@ -1,0 +1,21 @@
+class Summer {
+
+   field int x, y;
+
+   constructor Summer new(int Ax, int Ay) {
+      let x = Ax;
+      let y = Ay;
+      return this;
+   }
+
+   method Int sum() {
+      return x+y;
+   }
+        
+   /** Disposes this square. */
+   method void dispose() {
+      do Memory.deAlloc(this);
+      return;
+   }
+}
+

@@ -51,18 +51,15 @@
              (filter ext-file? (.list (io/file file-or-dir-name))))
             (when (ext-file? file-or-dir-name) (list file-or-dir-name))))))
 
-
-
-
-
-
-(defn remove-path-from-vm-filename [file-name]
-  (last (re-find #"([^/]*.vm)$" file-name)))
-
 (defn radix [filename]
   "Takes a filename and remove directory path and extension"
   (let [radix (last (re-matches #"^(?:.*/)?(.*?)(?:\.[^.]*$)?" filename))]
     radix))
+
+(defn path [filename]
+  (let [path (last (re-matches #"^(.*/)?(?:.*?)(?:\.[^.]*$)?" filename))]
+    path))
+
 
 (deftest radix-test
   (is (= "radix" (radix "radix")))
@@ -70,3 +67,10 @@
   (is (= "radix" (radix "../dir1/dir2/dir3/radix.")))
   (is (= "radix" (radix "../dir1/dir2/dir3/radix.ext")))
   (is (= "radix.notext" (radix "../dir1/dir2/dir3/radix.notext.ext"))))
+
+(deftest path-test
+  (is (= nil (path "radix")))
+  (is (= "../dir1/dir2/dir3/" (path "../dir1/dir2/dir3/radix")))
+  (is (= "../dir1/dir2/dir3/" (path "../dir1/dir2/dir3/radix.")))
+  (is (= "../dir1/dir2/dir3/" (path "../dir1/dir2/dir3/radix.ext")))
+  (is (= "../dir1/dir2/dir3/" (path "../dir1/dir2/dir3/radix.notext.ext"))))

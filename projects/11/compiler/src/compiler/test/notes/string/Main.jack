@@ -1,0 +1,10 @@
+class Main {
+
+    function void main() {
+        var String s;
+        let s = "ciao";
+        do Output.printString(s);
+        do Output.println();
+        return;
+    }
+}
