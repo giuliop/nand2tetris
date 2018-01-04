@@ -41,40 +41,13 @@
        (partition 2)
        (map #(hash-map :type (first %) :name (second %) :kind "argument"))))
 
-(defn vars-from [body]
-  "Takes a tree representing a subroutine body and returns a list of var declarations
-  as a hash-map with keys :type, :name, and :kind"
-  (transduce (comp
-               (filter #(= "varDec" (:type %)))
-               (map :value)
-               (map (partial drop 1))   ; drop var keyword
-               (filter (not= ","))
-               (map (fn [varDec]
-                      (let [type (first varDec) vars (rest varDec)]
-                        (map #(hash-map :type type :name % :kind "local") vars)))))
-             concat
-             body))
-
-(defn parse-subroutineDec [tree]
-  "Takes a tree representing a subroutineDec and retruns a map of its fields"
-  (let [nodes (:value tree)
-        body (drop 1 (drop-last (:value (nth nodes 6)))) ; removes { and }]
-        vars (vars-from body)]
-    {:func-type (:value (nth nodes 0))
-     :ret-type (:value (nth nodes 1))
-     :func-name (:value (nth nodes 2))
-     :params (parameters (nth nodes 4))
-     :body body
-     :vars vars
-     :statements (:value (first (drop (count vars) body)))}))
-
 (defn lookup [table var-node]
   "Takes a symbol table and a var node and returns the var map or throws an error"
   (if (nil? table)
     (throw (UnsupportedOperationException.
              (str "Compilation error: unrecognized symbol " (:value var-node)
                   " - line: " (:line var-node))))
-    (get table (:value var-node) (lookup (:root table var-node)))))
+    (or (get table (:value var-node)) (lookup (:root table) var-node))))
 
 (defn unary-op [tree]
   "Takes a tree representing an unary-op and returns the string of equivalent vm code"
@@ -131,7 +104,7 @@
         num-params (+ (/ (inc (count exp-list)) 2)
                       (if a-var 1 0))]
     (str (when a-var (str "push " (:kind a-var) " " (:cont a-var) "\n"))
-         (transduce (comp :value
+         (transduce (comp (map :value)
                           (remove #(= "," %))
                           (map (partial push-expression table)))
                     str exp-list)
@@ -141,18 +114,19 @@
   "Takes a symbol table and a tree representing a term to be pushed to the stack and
   returns the equivalent vm code"
   (let [{:keys [type value] :as _1st} (nth (:value tree) 0)
-        _2nd (nth (:value tree) 1)
-        _3rd (nth (:value tree) 2)]
+        _2nd (nth (:value tree) 1 nil)
+        _3rd (nth (:value tree) 2 nil)]
     (case type
       "integerConstant" (str "push constant " value "\n")
       "stringConstant" (push-string-constant value)
       "keyword" (push-keyword value)
-      "identifier" (cond (= "(" (:value _2nd)) (push-subroutineCall table tree)
-                         (= "[" (:value _2nd)) (push-or-pop-var "push" table value _3rd)
-                         :else (push-or-pop-var "push" table value))
-      "symbol" (if (= "(" value) (push-expression table _2nd)
+      "identifier" (cond (some #{(:value _2nd)} ["(" "."]) (push-subroutineCall table tree)
+                         (= "[" (:value _2nd)) (push-or-pop-var "push" table _1st _3rd)
+                         :else (push-or-pop-var "push" table _1st))
+      "symbol" (if (= "(" value) (push-expression table (:value _2nd))
                  (str (push-term table _2nd)
-                      (unary-op _1st))))))
+                      (unary-op _1st)))
+      nil "")))
 
 (defn push-expression [table exp-value]
   "Takes a symbol table and the value of an expression tree to be pushed to the
@@ -160,45 +134,36 @@
   (let [[term op & xs] exp-value
         code (push-term table term)]
     (if-not op code
-      (str code (push-expression table xs) (binary-op)))))
+      (str code (push-expression table xs) (binary-op op)))))
 
 (defn push-or-pop-var
   ([push-or-pop table var-node]
-   "Takes a 'push' or 'pop', a symbol table, and a var map and returns a string
+   "Takes a 'push' or 'pop', a symbol table, and a var node and returns a string
    of vm code that pushes or pops it to the stack"
-   (let [{:keys [kind cont]} (lookup table (:value var-node))]
+   (let [{:keys [kind cont]} (lookup table var-node)]
      (if (= :field kind) (str "push argument 0"         "\n"
                               "pop pointer 0"           "\n"
                               push-or-pop " this " cont "\n")
-       (str push-or-pop kind cont))))
+       (str push-or-pop " " (name kind) " " cont "\n"))))
 
   ([push-or-pop table var-node array-exp]
    "With a fourth arg uses it as array index"
-   (let [{:keys [kind cont]} (lookup table (:value var-node))]
+   (let [{:keys [kind cont]} (lookup table var-node)]
      (if (= :field kind) (str (push-or-pop "push" table var-node)
-                              (push-expression table array-exp)
+                              (push-expression table (:value array-exp))
                               "add"
                               "pop pointer 1" "\n"
                               push-or-pop " that 0" "\n")
        (str "push " kind " " cont "\n"
-            (push-expression table array-exp)
+            (push-expression table (:value array-exp))
             "add"
             "pop pointer 1" "\n"
             push-or-pop " that 0" "\n")))))
 
-(defn compile-let [table tree]
-  "Takes a function symbol table and a tree representing a let statement and returns
-  a string of compiled vm code"
-  (let [dest (second tree)
-        array-exp (when (= "[" (nth tree 2)) (nth tree 3))
-        push-value (push-expression table (:value (last (drop-last tree))))]
-    (str push-value
-         (if array-exp (push-or-pop-var "pop" table dest array-exp)
-           (push-or-pop-var "pop" table dest)))))
-
 (defn compile-if [table tree]
   "Takes a function symbol table and a tree representing an if statement and returns
   a string of compiled vm code"
+  (declare compile-statement)
   (let [pred-exp-value (:value (nth (:value tree) 2))
         if-statements (nth (:value tree) 5)
         if-label (gensym "if-label")
@@ -213,6 +178,17 @@
          "label " else-label "\n"
          (transduce (map (partial compile-statement table)) str else-statements)
          "label " if-label "\n")))
+
+(defn compile-let [table tree]
+  "Takes a function symbol table and a tree representing a let statement and returns
+  a string of compiled vm code"
+  (let [tokens (:value tree)
+        dest (second tokens)
+        array-exp (when (= "[" (:value (nth tokens 2))) (nth tokens 3))
+        push-value (push-expression table (:value (last (drop-last tokens))))]
+    (str push-value
+         (if array-exp (push-or-pop-var "pop" table dest array-exp)
+           (push-or-pop-var "pop" table dest)))))
 
 (defn compile-while [table tree]
   "Takes a function symbol table and a tree representing a while statement and
@@ -233,8 +209,8 @@
 (defn compile-do [table tree]
   "Takes a function symbol table and a tree representing a do statement and
   returns a string of compiled vm code"
-  (let [func (second (:value tree))]
-    (str (push-subroutineCall table func)
+  (let [func (drop-last (drop 1 (:value tree)))]
+    (str (push-subroutineCall table {:type "subroutineCall" :value func})
          "pop temp 0" "\n")))
 
 (defn compile-return [table tree]
@@ -248,25 +224,54 @@
 (defn compile-statement [table tree]
   "Takes a function symbol table and a tree representing a statement and returns a
   string of compiled vm code"
-  (case (first tree)
-    "let" (compile-let table tree)
-    "if" (compile-if table tree)
-    "while" (compile-while table tree)
-    "do" (compile-do table tree)
-    "return" (compile-return table tree)))
+  (case (:type tree)
+    "letStatement" (compile-let table tree)
+    "ifStatement" (compile-if table tree)
+    "whileStatement" (compile-while table tree)
+    "doStatement" (compile-do table tree)
+    "returnStatement" (compile-return table tree)
+    nil ""))
+
+(defn vars-from [body]
+  "Takes a tree representing a subroutine body and returns a list of var declarations
+  as a hash-map with keys :type, :name, and :kind"
+  (transduce (comp
+               (filter #(= "varDec" (:type %)))
+               (map :value)
+               (map (partial map :value))
+               (map (partial drop 1))   ; drop var keyword
+               (map (partial drop-last)); drop ; at the end
+               (map (partial filter #(not= "," %)))
+               (map (fn [varDec]
+                      (let [type (first varDec) vars (rest varDec)]
+                        (map #(hash-map :type type :name % :kind "local") vars)))))
+             concat
+             body))
+
+(defn parse-subroutineDec [tree]
+  "Takes a tree representing a subroutineDec and retruns a map of its fields"
+  (let [nodes (:value tree)
+        body (drop 1 (drop-last (:value (nth nodes 6)))) ; removes { and }]
+        vars (vars-from body)]
+    {:func-type (:value (nth nodes 0))
+     :ret-type (:value (nth nodes 1))
+     :func-name (:value (nth nodes 2))
+     :params (parameters (nth nodes 4))
+     :body body
+     :vars vars
+     :statements (:value (first (drop (count vars) body)))}))
 
 (defn compile-subroutineDec [classname class-table tree]
   "Takes a classname, a class symbol table and a tree representing a subroutineDec and
   retruns a string of compiled vm code"
   (let [{:keys [func-type ret-type func-name params body vars statements]}
-                (parse-subroutineDec tree)
+              (parse-subroutineDec tree)
         table (transduce
                      (map #(hash-map :name (:name %) :type (:type %) :kind (keyword (:kind %))))
                      (completing add-symbol)
                      {:root class-table :argument 0 :local 0} (concat params vars))]
     (str "function " classname "." func-name " " (count params) "\n"
-         (transduce (map (partial compile-statement table)) str statements)
-         )))
+         (transduce (map (partial compile-statement table)) str statements))))
 
 (defn compile-class [tree]
   "Takes a tree representing a parsed jack class and returns a string of compiled vm code"
@@ -278,6 +283,24 @@
     (transduce (map (partial compile-subroutineDec classname class-table))
                str class-funcs)))
 
+(defn generate-vm [filename]
+  "Takes a string of jack code and translate it into a string of vm code"
+  (let [tree-or-error (parse/tree filename)]
+    (if (string? tree-or-error)
+      (println "Cannot compile file " filename "\n" tree-or-error)
+      (try (compile-class tree-or-error)
+           (catch UnsupportedOperationException e (println (.getMessage e) e))))))
+
+(defn vm [file-or-dir]
+  ;(create-sys-file (file/path file-or-dir))
+  (doseq [file (file/list-files ".jack" file-or-dir)
+        :let [vm-filename (file/rename-to-vm file)
+              vm-code (generate-vm file)]]
+    (when vm-code
+      (file/write-string vm-filename vm-code))))
+
+
+;;; TESTING ;;;
 (deftest test-compile-class
   (let [tree (-> (parse/tree "src/compiler/test/square/Square.jack"))
         class-vars (parse/class-variables tree)
@@ -297,22 +320,36 @@
                      {:type "int" :name "Ay" :kind "argument"}
                      {:type "int" :name "Asize" :kind "argument"})
            :vars ()} (dissoc (parse-subroutineDec subroutineDec) :body :statements)))
+    (def b body)
     ))
 
-(defn generate-vm [filename]
-  "Takes a string of jack code and translate it into a string of vm code"
-  (let [tree-or-error (parse/tree filename)]
-    (if (string? tree-or-error)
-      (println "Cannot compile file " filename "\n" tree-or-error)
-      (try (compile-class tree-or-error)
-           (catch UnsupportedOperationException e (println (.getMessage e)))))))
+(deftest test-parse-subroutineDec
+  (let [tree (-> (parse/tree "../ConvertToBin/Main.jack"))
+        class-vars (parse/class-variables tree)
+        class-funcs (parse/class-functions tree)
+        subroutineDec (first class-funcs)
+        sym {:name "x" :kind :field :type "int"}
+        {:keys [func-type ret-type func-name params body vars statements]}
+                (parse-subroutineDec subroutineDec)]
+    (is (= {:func-type "function" :ret-type "void" :func-name "main"
+            :params '() :vars '({:name "value" :kind "local" :type "int"})}
+           (dissoc (parse-subroutineDec subroutineDec) :body :statements)))))
 
-(defn vm [file-or-dir]
-  (create-sys-file (file/path file-or-dir))
-  (for [file (file/list-files ".jack" file-or-dir)
-        :let [vm-filename (file/rename-to-vm file)
-              vm-code (generate-vm file)]]
-    (when vm-code
-      (file/write-string vm-filename vm-code))))
+(deftest test-lookup
+  (let [table {:root {"x" 1, :root nil} "y" 2}]
+    (is (= 2 (lookup table {:value "y"}))
+        (= 1 (lookup table {:value "x"})))))
 
+((defn compile-test-files []
+  (let [test-dirs [
+                   ;"../Seven/"
+                   "../ConvertToBin/"
+                   ;"../Square/"
+                   ;"../Average/"
+                   ;"../Pong/"
+                   ;"../ComplexArrays/"
+                   ]]
+    (doseq [dir test-dirs]
+      (println "compiling...." dir)
+      (vm dir)))))
 
