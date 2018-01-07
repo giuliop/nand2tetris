@@ -76,34 +76,49 @@
                              "call String.appendChar 2" "\n"))
                   str s)))
 
-(defn push-keyword [k]
-  "Takes a keyword value and returns a string of vm code that pushes it to the stack"
+(defn push-keyword [table k]
+  "Takes a symbol table and a keyword value and returns a string of vm code that
+  pushes it to the stack"
   (case k
     "true" (str "push constant 0" "\n"
-                          "not" "\n")
+                "not" "\n")
     ("false" "null") (str "push constant 0" "\n")
-    "this" (str "push argument 0" "\n")))
+    "this" (str "push pointer 0" "\n")))
 
 (defn lookup-class-name [table]
   "Takes a symbol table and returns the class-name of the table"
   (if (nil? (:root table)) (:classname table)
-    (lookup-class-name (:root table))))
+    (recur (:root table))))
 
+(defn lookup-num-class-fields [table]
+  "Takes a symbol table and returns the number of fields of the class"
+  (if (nil? (:root table)) (:field table)
+    (recur (:root table))))
+
+(defn lookup-func-type [table]
+  "Takes a symbol table and returns the type of the func we are in"
+  (:func-type table))
+
+(declare push-expression)
+(declare push-or-pop-var)
 (defn push-subroutineCall [table tree]
   "Takes a symbol table and a tree representing a subroutineCall to be pushed to the
   stack and returns the equivalent vm code"
   (let [tokens (:value tree)
-        method? (= "." (:value (second tokens)))
-        a-var (and method? (try (lookup table (first tokens))
-                                (catch UnsupportedOperationException e nil)))
+        dot? (= "." (:value (second tokens)))
+        a-var (and dot? (try (lookup table (first tokens))
+                             (catch UnsupportedOperationException e nil)))
         class-name (cond a-var (:type a-var)
-                         method? (:value (first tokens))
+                         dot? (:value (first tokens))
                          :else (lookup-class-name table))
-        func-name (if method? (:value (nth tokens 2)) (:value (first tokens)))
+        func-name (if dot? (:value (nth tokens 2)) (:value (first tokens)))
         exp-list (:value (last (drop-last tokens)))
-        num-params (+ (/ (inc (count exp-list)) 2)
-                      (if a-var 1 0))]
-    (str (when a-var (str "push " (:kind a-var) " " (:cont a-var) "\n"))
+        num-params (+ (count (remove #(= "," (:value %)) exp-list))
+                      (if (and dot? (not a-var)) 0 1))]
+    (str (cond (= :field (:kind a-var)) (str "push this " (:cont a-var) "\n")
+               a-var (str "push " (name (:kind a-var)) " " (:cont a-var) "\n")
+               (not dot?) (str "push pointer 0" "\n")
+               :else "")
          (transduce (comp (map :value)
                           (remove #(= "," %))
                           (map (partial push-expression table)))
@@ -119,7 +134,7 @@
     (case type
       "integerConstant" (str "push constant " value "\n")
       "stringConstant" (push-string-constant value)
-      "keyword" (push-keyword value)
+      "keyword" (push-keyword table value)
       "identifier" (cond (some #{(:value _2nd)} ["(" "."]) (push-subroutineCall table tree)
                          (= "[" (:value _2nd)) (push-or-pop-var "push" table _1st _3rd)
                          :else (push-or-pop-var "push" table _1st))
@@ -141,9 +156,7 @@
    "Takes a 'push' or 'pop', a symbol table, and a var node and returns a string
    of vm code that pushes or pops it to the stack"
    (let [{:keys [kind cont]} (lookup table var-node)]
-     (if (= :field kind) (str "push argument 0"         "\n"
-                              "pop pointer 0"           "\n"
-                              push-or-pop " this " cont "\n")
+     (if (= :field kind) (str push-or-pop " this " cont "\n")
        (str push-or-pop " " (name kind) " " cont "\n"))))
 
   ([push-or-pop table var-node array-exp]
@@ -151,12 +164,12 @@
    (let [{:keys [kind cont]} (lookup table var-node)]
      (if (= :field kind) (str (push-or-pop "push" table var-node)
                               (push-expression table (:value array-exp))
-                              "add"
+                              "add" "\n"
                               "pop pointer 1" "\n"
                               push-or-pop " that 0" "\n")
-       (str "push " kind " " cont "\n"
+       (str "push " (name kind) " " cont "\n"
             (push-expression table (:value array-exp))
-            "add"
+            "add" "\n"
             "pop pointer 1" "\n"
             push-or-pop " that 0" "\n")))))
 
@@ -165,19 +178,19 @@
   a string of compiled vm code"
   (declare compile-statement)
   (let [pred-exp-value (:value (nth (:value tree) 2))
-        if-statements (nth (:value tree) 5)
-        if-label (gensym "if-label")
-        else-statements (when (> (count (:value tree)) 7) (nth (:value tree) 9))
+        if-statements (:value (nth (:value tree) 5))
+        if-end-label (gensym "if-end-label")
+        else-statements (when (> (count (:value tree)) 7) (:value (nth (:value tree) 9)))
         else-label (gensym "else-label")]
     (str (push-expression table pred-exp-value)
          "push constant 0" "\n"
-         "eq"
+         "eq" "\n"
          "if-goto " else-label "\n"
          (transduce (map (partial compile-statement table)) str if-statements)
-         "goto " if-label "\n"
+         "goto " if-end-label "\n"
          "label " else-label "\n"
          (transduce (map (partial compile-statement table)) str else-statements)
-         "label " if-label "\n")))
+         "label " if-end-label "\n")))
 
 (defn compile-let [table tree]
   "Takes a function symbol table and a tree representing a let statement and returns
@@ -194,13 +207,13 @@
   "Takes a function symbol table and a tree representing a while statement and
   returns a string of compiled vm code"
   (let [pred-exp-value (:value (nth (:value tree) 2))
-        statements (nth (:value tree) 5)
+        statements (:value (nth (:value tree) 5))
         true-label (gensym "while-true-label")
         false-label (gensym "while-false-label")]
     (str "label " true-label "\n"
          (push-expression table pred-exp-value)
          "push constant 0" "\n"
-         "eq"
+         "eq" "\n"
          "if-goto " false-label "\n"
          (transduce (map (partial compile-statement table)) str statements)
          "goto " true-label "\n"
@@ -259,18 +272,27 @@
      :params (parameters (nth nodes 4))
      :body body
      :vars vars
-     :statements (:value (first (drop (count vars) body)))}))
+     :statements (:value (first (filter #(= "statements" (:type %)) body)))
+     }))
 
 (defn compile-subroutineDec [classname class-table tree]
   "Takes a classname, a class symbol table and a tree representing a subroutineDec and
   retruns a string of compiled vm code"
   (let [{:keys [func-type ret-type func-name params body vars statements]}
               (parse-subroutineDec tree)
-        table (transduce
-                     (map #(hash-map :name (:name %) :type (:type %) :kind (keyword (:kind %))))
-                     (completing add-symbol)
-                     {:root class-table :argument 0 :local 0} (concat params vars))]
-    (str "function " classname "." func-name " " (count params) "\n"
+        table (as-> {:root class-table :argument 0 :local 0 :func-type func-type} table
+                    (assoc table :argument (if (= "method" func-type) 1 0))
+                    (transduce (map #(hash-map :name (:name %) :type (:type %)
+                                               :kind (keyword (:kind %))))
+                               (completing add-symbol) table (concat params vars)))]
+    (str "function " classname "." func-name " " (count vars) "\n"
+         (when (= "new" func-name)
+           (str "push constant " (lookup-num-class-fields class-table) "\n"
+                "call Memory.alloc 1" "\n"
+                "pop pointer 0" "\n"))
+         (when (= "method" func-type)
+           (str "push argument 0" "\n"
+                "pop pointer 0" "\n"))
          (transduce (map (partial compile-statement table)) str statements))))
 
 (defn compile-class [tree]
@@ -278,8 +300,9 @@
   (let [classname (parse/classname tree)
         class-vars (parse/class-variables tree)
         class-funcs (parse/class-functions tree)
-        class-table {:static 0 :field 0 :root nil :classname classname}
-        class-table (reduce compile-classVarDec class-table class-vars)]
+        class-table (as->
+                      {:root nil :classname classname :funcs {} :static 0 :field 0} table
+                      (reduce compile-classVarDec table class-vars))]
     (transduce (map (partial compile-subroutineDec classname class-table))
                str class-funcs)))
 
@@ -327,12 +350,16 @@
   (let [tree (-> (parse/tree "../ConvertToBin/Main.jack"))
         class-vars (parse/class-variables tree)
         class-funcs (parse/class-functions tree)
-        subroutineDec (first class-funcs)
+        subroutineDec (nth class-funcs 1)
         sym {:name "x" :kind :field :type "int"}
-        {:keys [func-type ret-type func-name params body vars statements]}
+        {:keys [func-type ret-type func-name params body vars statements] :as f}
                 (parse-subroutineDec subroutineDec)]
-    (is (= {:func-type "function" :ret-type "void" :func-name "main"
-            :params '() :vars '({:name "value" :kind "local" :type "int"})}
+    ;(clojure.pprint/pprint f)
+    (is (= {:func-type "function" :ret-type "void" :func-name "convert"
+            :params '({:name "value" :kind "argument" :type "int"})
+            :vars '({:name "mask" :kind "local" :type "int"}
+                    {:name "position" :kind "local" :type "int"}
+                    {:name "loop" :kind "local" :type "boolean"})}
            (dissoc (parse-subroutineDec subroutineDec) :body :statements)))))
 
 (deftest test-lookup
@@ -342,12 +369,12 @@
 
 ((defn compile-test-files []
   (let [test-dirs [
-                   ;"../Seven/"
+                   "../Seven/"
                    "../ConvertToBin/"
-                   ;"../Square/"
-                   ;"../Average/"
-                   ;"../Pong/"
-                   ;"../ComplexArrays/"
+                   "../Square/Square/"
+                   "../Average/"
+                   "../Pong/"
+                   "../ComplexArrays/"
                    ]]
     (doseq [dir test-dirs]
       (println "compiling...." dir)
