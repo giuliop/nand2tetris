@@ -395,7 +395,7 @@ push constant 0
 eq
 push constant 0
 eq
-if-goto else-label18001
+if-goto else-label35603
 push local 0
 push constant 10
 call Main.fill 2
@@ -446,9 +446,9 @@ push constant 1
 add
 pop pointer 1
 pop that 0
-goto if-end-label18000
-label else-label18001
-label if-end-label18000
+goto if-end-label35602
+label else-label35603
+label if-end-label35602
 push constant 44
 call String.new 1
 push constant 84
@@ -661,13 +661,13 @@ push constant 2
 call Math.multiply 2
 return
 function Main.fill 0
-label while-true-label18002
+label while-true-label35604
 push argument 1
 push constant 0
 gt
 push constant 0
 eq
-if-goto while-false-label18003
+if-goto while-false-label35605
 push argument 1
 push constant 1
 sub
@@ -679,7 +679,7 @@ push argument 1
 add
 pop pointer 1
 pop that 0
-goto while-true-label18002
-label while-false-label18003
+goto while-true-label35604
+label while-false-label35605
 push constant 0
 return

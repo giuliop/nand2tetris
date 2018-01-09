@@ -72,9 +72,9 @@ add
 push constant 510
 lt
 and
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+push constant 0
+eq
+if-goto else-label32506
 push pointer 0
 call Square.erase 1
 pop temp 0
@@ -85,7 +85,9 @@ pop this 2
 push pointer 0
 call Square.draw 1
 pop temp 0
-label IF_FALSE0
+goto if-end-label32505
+label else-label32506
+label if-end-label32505
 push constant 0
 return
 function Square.decSize 0
@@ -94,9 +96,9 @@ pop pointer 0
 push this 2
 push constant 2
 gt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+push constant 0
+eq
+if-goto else-label32508
 push pointer 0
 call Square.erase 1
 pop temp 0
@@ -107,7 +109,9 @@ pop this 2
 push pointer 0
 call Square.draw 1
 pop temp 0
-label IF_FALSE0
+goto if-end-label32507
+label else-label32508
+label if-end-label32507
 push constant 0
 return
 function Square.moveUp 0
@@ -116,9 +120,9 @@ pop pointer 0
 push this 1
 push constant 1
 gt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+push constant 0
+eq
+if-goto else-label32510
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -154,7 +158,9 @@ push constant 1
 add
 call Screen.drawRectangle 4
 pop temp 0
-label IF_FALSE0
+goto if-end-label32509
+label else-label32510
+label if-end-label32509
 push constant 0
 return
 function Square.moveDown 0
@@ -165,9 +171,9 @@ push this 2
 add
 push constant 254
 lt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+push constant 0
+eq
+if-goto else-label32512
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -203,7 +209,9 @@ push this 2
 add
 call Screen.drawRectangle 4
 pop temp 0
-label IF_FALSE0
+goto if-end-label32511
+label else-label32512
+label if-end-label32511
 push constant 0
 return
 function Square.moveLeft 0
@@ -212,9 +220,9 @@ pop pointer 0
 push this 0
 push constant 1
 gt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+push constant 0
+eq
+if-goto else-label32514
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -250,7 +258,9 @@ push this 2
 add
 call Screen.drawRectangle 4
 pop temp 0
-label IF_FALSE0
+goto if-end-label32513
+label else-label32514
+label if-end-label32513
 push constant 0
 return
 function Square.moveRight 0
@@ -261,9 +271,9 @@ push this 2
 add
 push constant 510
 lt
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+push constant 0
+eq
+if-goto else-label32516
 push constant 0
 call Screen.setColor 1
 pop temp 0
@@ -299,6 +309,8 @@ push this 2
 add
 call Screen.drawRectangle 4
 pop temp 0
-label IF_FALSE0
+goto if-end-label32515
+label else-label32516
+label if-end-label32515
 push constant 0
 return

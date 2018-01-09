@@ -44,13 +44,13 @@ call Array.new 1
 pop local 0
 push constant 0
 pop local 2
-label while-true-label17934
+label while-true-label35344
 push local 2
 push local 1
 lt
 push constant 0
 eq
-if-goto while-false-label17935
+if-goto while-false-label35345
 push constant 16
 call String.new 1
 push constant 69
@@ -103,8 +103,8 @@ push local 2
 push constant 1
 add
 pop local 2
-goto while-true-label17934
-label while-false-label17935
+goto while-true-label35344
+label while-false-label35345
 push constant 15
 call String.new 1
 push constant 84

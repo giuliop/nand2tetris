@@ -5,14 +5,6 @@
            [clojure.zip :as zip]
            [clojure.string :as str]))
 
-(defn create-sys-file [path]
-  (let [filename (str path "Sys.vm")
-        code (str "function Sys.init 0" "\n"
-                  "call Main.main 0" "\n"
-                  "label WHILE" "\n"
-                  "GOTO WHILE" "\n")]
-    (file/write-string filename code)))
-
 (defn add-symbol [table sym]
    "Takes a table and adds the new sym to table and returns the table
    type can be one of int, char, boolean, 'classname'
@@ -315,7 +307,6 @@
            (catch UnsupportedOperationException e (println (.getMessage e) e))))))
 
 (defn vm [file-or-dir]
-  ;(create-sys-file (file/path file-or-dir))
   (doseq [file (file/list-files ".jack" file-or-dir)
         :let [vm-filename (file/rename-to-vm file)
               vm-code (generate-vm file)]]
@@ -367,16 +358,44 @@
     (is (= 2 (lookup table {:value "y"}))
         (= 1 (lookup table {:value "x"})))))
 
-((defn compile-test-files []
+(defn compile-test-files []
   (let [test-dirs [
                    "../Seven/"
                    "../ConvertToBin/"
-                   "../Square/Square/"
+                   "../Square/"
                    "../Average/"
                    "../Pong/"
                    "../ComplexArrays/"
                    ]]
     (doseq [dir test-dirs]
-      (println "compiling...." dir)
-      (vm dir)))))
+      ;(println "compiling...." dir)
+      (vm dir))))
+
+(deftest refactor-vm
+  "Compares reference vm files to new compilation to support refactoring"
+  (let [test-programs [
+                   {:dir "Seven/" :ref-files ["Main.vm"]}
+                   {:dir "ConvertToBin/" :ref-files ["Main.vm"]}
+                   {:dir "Square/" :ref-files ["Main.vm" "Square.vm" "SquareGame.vm"]}
+                   {:dir "Average/" :ref-files ["Main.vm"]}
+                   {:dir "Pong/" :ref-files ["Main.vm" "Bat.vm" "Ball.vm" "PongGame.vm"]}
+                   {:dir "ComplexArrays/" :ref-files ["Main.vm"]}]
+        gensym-words #{"if-end-label" "else-label" "while-true-label" "while-false-label"}
+        is-digit? #(<= (int \0) (int %) (int \9))
+        remove-end-digits (fn [word] (apply str (take-while #(not (is-digit? %)) word)))
+        word-cmp? (fn [[w1 w2]] (or (= w1 w2)
+                                  (let [w1 (remove-end-digits w1)
+                                        w2 (remove-end-digits w2)]
+                                    (and (= w1 w2)
+                                         (every? #(contains? gensym-words %) [w1 w2])))))
+        line-cmp? (fn [l1 l2] (let [ws1 (str/split l1 #"\s+")
+                                    ws2 (str/split l1 #"\s+")]
+                                (every? word-cmp? (partition 2 (interleave ws1 ws2))))) ]
+    (doseq [{:keys [dir ref-files]} test-programs
+            file ref-files
+            :let [new-f (str "../" dir file)
+                  ref-f (str "src/compiler/test/reference/" dir file)]]
+      ;(println "comparing " new-f " to " ref-f)
+      (vm (str "../" dir))
+      (is (= nil (file/first-different-line new-f ref-f line-cmp?))))))
 

@@ -1,6 +1,7 @@
 (ns compiler.file
   (:require [clojure.test :refer :all]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure.string :as str]))
 
 (defn write-string [file-name string]
   "Takes a filename and a string and writes it to file"
@@ -59,6 +60,27 @@
 (defn path [filename]
   (let [path (last (re-matches #"^(.*/)?(?:.*?)(?:\.[^.]*$)?" filename))]
     path))
+
+(defn first-different-line
+  "Takes two files and compares whether they are identical line by line returning
+  nil if so or an error message otherwise; if supplied with a line comparator
+  uses that for line comparison"
+  ([f1 f2]
+   (compare-files f1 f2 =))
+  ([f1 f2 line-cmp?]
+   (let [stage-file #(->> % (slurp) (str/split-lines))
+         lines-1 (stage-file f1)
+         lines-2 (stage-file f2)
+         error-msg (fn [line-num]
+                     (str "Line " line-num " is different" "\n"
+                              f1 " -> " (get lines-1 (dec line-num)) "\n"
+                              f2 " -> " (get lines-2 (dec line-num)) "\n"))]
+     (loop [x lines-1, y lines-2, line-num 1]
+       (cond (every? nil? [x y]) nil
+             (or (not (line-cmp? (first x) (first y)))
+                 (and (nil? x) y)
+                 (and (nil? y) x)) (do (println (first x) (first y) line-num) (error-msg line-num))
+             :else (recur (next x) (next y) (inc line-num)))))))
 
 
 (deftest radix-test
