@@ -90,13 +90,13 @@ return
 function PongGame.run 1
 push argument 0
 pop pointer 0
-label while-true-label35544
+label while-true-label15465
 push this 3
 not
 push constant 0
 eq
-if-goto while-false-label35545
-label while-true-label35546
+if-goto while-false-label15466
+label while-true-label15467
 push local 0
 push constant 0
 eq
@@ -105,7 +105,7 @@ not
 and
 push constant 0
 eq
-if-goto while-false-label35547
+if-goto while-false-label15468
 call Keyboard.keyPressed 0
 pop local 0
 push this 0
@@ -117,47 +117,47 @@ pop temp 0
 push constant 50
 call Sys.wait 1
 pop temp 0
-goto while-true-label35546
-label while-false-label35547
+goto while-true-label15467
+label while-false-label15468
 push local 0
 push constant 130
 eq
 push constant 0
 eq
-if-goto else-label35549
+if-goto else-label15470
 push this 0
 push constant 1
 call Bat.setDirection 2
 pop temp 0
-goto if-end-label35548
-label else-label35549
+goto if-end-label15469
+label else-label15470
 push local 0
 push constant 132
 eq
 push constant 0
 eq
-if-goto else-label35551
+if-goto else-label15472
 push this 0
 push constant 2
 call Bat.setDirection 2
 pop temp 0
-goto if-end-label35550
-label else-label35551
+goto if-end-label15471
+label else-label15472
 push local 0
 push constant 140
 eq
 push constant 0
 eq
-if-goto else-label35553
+if-goto else-label15474
 push constant 0
 not
 pop this 3
-goto if-end-label35552
-label else-label35553
-label if-end-label35552
-label if-end-label35550
-label if-end-label35548
-label while-true-label35554
+goto if-end-label15473
+label else-label15474
+label if-end-label15473
+label if-end-label15471
+label if-end-label15469
+label while-true-label15475
 push local 0
 push constant 0
 eq
@@ -167,7 +167,7 @@ not
 and
 push constant 0
 eq
-if-goto while-false-label35555
+if-goto while-false-label15476
 call Keyboard.keyPressed 0
 pop local 0
 push this 0
@@ -179,14 +179,14 @@ pop temp 0
 push constant 50
 call Sys.wait 1
 pop temp 0
-goto while-true-label35554
-label while-false-label35555
-goto while-true-label35544
-label while-false-label35545
+goto while-true-label15475
+label while-false-label15476
+goto while-true-label15465
+label while-false-label15466
 push this 3
 push constant 0
 eq
-if-goto else-label35557
+if-goto else-label15478
 push constant 10
 push constant 27
 call Output.moveCursor 2
@@ -213,9 +213,9 @@ push constant 114
 call String.appendChar 2
 call Output.printString 1
 pop temp 0
-goto if-end-label35556
-label else-label35557
-label if-end-label35556
+goto if-end-label15477
+label else-label15478
+label if-end-label15477
 push constant 0
 return
 function PongGame.moveBall 5
@@ -234,7 +234,7 @@ not
 and
 push constant 0
 eq
-if-goto else-label35559
+if-goto else-label15480
 push this 2
 pop this 5
 push constant 0
@@ -256,7 +256,7 @@ push constant 4
 eq
 push constant 0
 eq
-if-goto else-label35561
+if-goto else-label15482
 push local 1
 push local 4
 gt
@@ -269,7 +269,7 @@ push this 3
 not
 push constant 0
 eq
-if-goto else-label35563
+if-goto else-label15484
 push local 4
 push local 1
 push constant 10
@@ -277,12 +277,12 @@ add
 lt
 push constant 0
 eq
-if-goto else-label35565
+if-goto else-label15486
 push constant 1
 neg
 pop local 0
-goto if-end-label35564
-label else-label35565
+goto if-end-label15485
+label else-label15486
 push local 3
 push local 2
 push constant 10
@@ -290,13 +290,13 @@ sub
 gt
 push constant 0
 eq
-if-goto else-label35567
+if-goto else-label15488
 push constant 1
 pop local 0
-goto if-end-label35566
-label else-label35567
-label if-end-label35566
-label if-end-label35564
+goto if-end-label15487
+label else-label15488
+label if-end-label15487
+label if-end-label15485
 push this 6
 push constant 2
 sub
@@ -316,18 +316,18 @@ pop temp 0
 push this 4
 call Output.printInt 1
 pop temp 0
-goto if-end-label35562
-label else-label35563
-label if-end-label35562
-goto if-end-label35560
-label else-label35561
-label if-end-label35560
+goto if-end-label15483
+label else-label15484
+label if-end-label15483
+goto if-end-label15481
+label else-label15482
+label if-end-label15481
 push this 1
 push local 0
 call Ball.bounce 2
 pop temp 0
-goto if-end-label35558
-label else-label35559
-label if-end-label35558
+goto if-end-label15479
+label else-label15480
+label if-end-label15479
 push constant 0
 return

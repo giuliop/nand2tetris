@@ -107,7 +107,7 @@ pop this 7
 push this 7
 push constant 0
 eq
-if-goto else-label35569
+if-goto else-label15426
 push local 0
 pop local 2
 push local 1
@@ -122,8 +122,8 @@ push this 0
 push argument 1
 lt
 pop this 9
-goto if-end-label35568
-label else-label35569
+goto if-end-label15425
+label else-label15426
 push this 0
 push argument 1
 lt
@@ -132,7 +132,7 @@ push this 1
 push argument 2
 lt
 pop this 9
-label if-end-label35568
+label if-end-label15425
 push constant 2
 push local 1
 call Math.multiply 2
@@ -162,13 +162,13 @@ push constant 0
 lt
 push constant 0
 eq
-if-goto else-label35571
+if-goto else-label15428
 push this 4
 push this 5
 add
 pop this 4
-goto if-end-label35570
-label else-label35571
+goto if-end-label15427
+label else-label15428
 push this 4
 push this 6
 add
@@ -176,134 +176,134 @@ pop this 4
 push this 9
 push constant 0
 eq
-if-goto else-label35573
+if-goto else-label15430
 push this 7
 push constant 0
 eq
-if-goto else-label35575
+if-goto else-label15432
 push this 0
 push constant 4
 add
 pop this 0
-goto if-end-label35574
-label else-label35575
+goto if-end-label15431
+label else-label15432
 push this 1
 push constant 4
 add
 pop this 1
-label if-end-label35574
-goto if-end-label35572
-label else-label35573
+label if-end-label15431
+goto if-end-label15429
+label else-label15430
 push this 7
 push constant 0
 eq
-if-goto else-label35577
+if-goto else-label15434
 push this 0
 push constant 4
 sub
 pop this 0
-goto if-end-label35576
-label else-label35577
+goto if-end-label15433
+label else-label15434
 push this 1
 push constant 4
 sub
 pop this 1
-label if-end-label35576
-label if-end-label35572
-label if-end-label35570
+label if-end-label15433
+label if-end-label15429
+label if-end-label15427
 push this 8
 push constant 0
 eq
-if-goto else-label35579
+if-goto else-label15436
 push this 7
 push constant 0
 eq
-if-goto else-label35581
+if-goto else-label15438
 push this 1
 push constant 4
 add
 pop this 1
-goto if-end-label35580
-label else-label35581
+goto if-end-label15437
+label else-label15438
 push this 0
 push constant 4
 add
 pop this 0
-label if-end-label35580
-goto if-end-label35578
-label else-label35579
+label if-end-label15437
+goto if-end-label15435
+label else-label15436
 push this 7
 push constant 0
 eq
-if-goto else-label35583
+if-goto else-label15440
 push this 1
 push constant 4
 sub
 pop this 1
-goto if-end-label35582
-label else-label35583
+goto if-end-label15439
+label else-label15440
 push this 0
 push constant 4
 sub
 pop this 0
-label if-end-label35582
-label if-end-label35578
+label if-end-label15439
+label if-end-label15435
 push this 0
 push this 10
 gt
 not
 push constant 0
 eq
-if-goto else-label35585
+if-goto else-label15442
 push constant 1
 pop this 14
 push this 10
 pop this 0
-goto if-end-label35584
-label else-label35585
-label if-end-label35584
+goto if-end-label15441
+label else-label15442
+label if-end-label15441
 push this 0
 push this 11
 lt
 not
 push constant 0
 eq
-if-goto else-label35587
+if-goto else-label15444
 push constant 2
 pop this 14
 push this 11
 pop this 0
-goto if-end-label35586
-label else-label35587
-label if-end-label35586
+goto if-end-label15443
+label else-label15444
+label if-end-label15443
 push this 1
 push this 12
 gt
 not
 push constant 0
 eq
-if-goto else-label35589
+if-goto else-label15446
 push constant 3
 pop this 14
 push this 12
 pop this 1
-goto if-end-label35588
-label else-label35589
-label if-end-label35588
+goto if-end-label15445
+label else-label15446
+label if-end-label15445
 push this 1
 push this 13
 lt
 not
 push constant 0
 eq
-if-goto else-label35591
+if-goto else-label15448
 push constant 4
 pop this 14
 push this 13
 pop this 1
-goto if-end-label35590
-label else-label35591
-label if-end-label35590
+goto if-end-label15447
+label else-label15448
+label if-end-label15447
 push pointer 0
 call Ball.show 1
 pop temp 0
@@ -325,11 +325,11 @@ push constant 0
 eq
 push constant 0
 eq
-if-goto else-label35593
+if-goto else-label15450
 push constant 10
 pop local 4
-goto if-end-label35592
-label else-label35593
+goto if-end-label15449
+label else-label15450
 push this 2
 push constant 0
 lt
@@ -349,21 +349,21 @@ and
 or
 push constant 0
 eq
-if-goto else-label35595
+if-goto else-label15452
 push constant 20
 pop local 4
-goto if-end-label35594
-label else-label35595
+goto if-end-label15451
+label else-label15452
 push constant 5
 pop local 4
-label if-end-label35594
-label if-end-label35592
+label if-end-label15451
+label if-end-label15449
 push this 14
 push constant 1
 eq
 push constant 0
 eq
-if-goto else-label35597
+if-goto else-label15454
 push constant 506
 pop local 0
 push local 3
@@ -379,14 +379,14 @@ push local 4
 call Math.multiply 2
 add
 pop local 1
-goto if-end-label35596
-label else-label35597
+goto if-end-label15453
+label else-label15454
 push this 14
 push constant 2
 eq
 push constant 0
 eq
-if-goto else-label35599
+if-goto else-label15456
 push constant 0
 pop local 0
 push local 3
@@ -401,14 +401,14 @@ push local 4
 call Math.multiply 2
 add
 pop local 1
-goto if-end-label35598
-label else-label35599
+goto if-end-label15455
+label else-label15456
 push this 14
 push constant 3
 eq
 push constant 0
 eq
-if-goto else-label35601
+if-goto else-label15458
 push constant 250
 pop local 1
 push local 2
@@ -424,8 +424,8 @@ push local 4
 call Math.multiply 2
 add
 pop local 0
-goto if-end-label35600
-label else-label35601
+goto if-end-label15457
+label else-label15458
 push constant 0
 pop local 1
 push local 2
@@ -440,9 +440,9 @@ push local 4
 call Math.multiply 2
 add
 pop local 0
-label if-end-label35600
-label if-end-label35598
-label if-end-label35596
+label if-end-label15457
+label if-end-label15455
+label if-end-label15453
 push pointer 0
 push local 0
 push local 1

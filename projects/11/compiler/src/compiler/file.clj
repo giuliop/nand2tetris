@@ -66,7 +66,7 @@
   nil if so or an error message otherwise; if supplied with a line comparator
   uses that for line comparison"
   ([f1 f2]
-   (compare-files f1 f2 =))
+   (first-different-line f1 f2 =))
   ([f1 f2 line-cmp?]
    (let [stage-file #(->> % (slurp) (str/split-lines))
          lines-1 (stage-file f1)

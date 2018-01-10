@@ -30,49 +30,49 @@ push constant 1
 eq
 push constant 0
 eq
-if-goto else-label35305
+if-goto else-label15204
 push this 0
 call Square.moveUp 1
 pop temp 0
-goto if-end-label35304
-label else-label35305
-label if-end-label35304
+goto if-end-label15203
+label else-label15204
+label if-end-label15203
 push this 1
 push constant 2
 eq
 push constant 0
 eq
-if-goto else-label35307
+if-goto else-label15206
 push this 0
 call Square.moveDown 1
 pop temp 0
-goto if-end-label35306
-label else-label35307
-label if-end-label35306
+goto if-end-label15205
+label else-label15206
+label if-end-label15205
 push this 1
 push constant 3
 eq
 push constant 0
 eq
-if-goto else-label35309
+if-goto else-label15208
 push this 0
 call Square.moveLeft 1
 pop temp 0
-goto if-end-label35308
-label else-label35309
-label if-end-label35308
+goto if-end-label15207
+label else-label15208
+label if-end-label15207
 push this 1
 push constant 4
 eq
 push constant 0
 eq
-if-goto else-label35311
+if-goto else-label15210
 push this 0
 call Square.moveRight 1
 pop temp 0
-goto if-end-label35310
-label else-label35311
-label if-end-label35310
+goto if-end-label15209
+label else-label15210
+label if-end-label15209
 push constant 5
 call Sys.wait 1
 pop temp 0
@@ -83,122 +83,122 @@ push argument 0
 pop pointer 0
 push constant 0
 pop local 1
-label while-true-label35312
+label while-true-label15211
 push local 1
 not
 push constant 0
 eq
-if-goto while-false-label35313
-label while-true-label35314
+if-goto while-false-label15212
+label while-true-label15213
 push local 0
 push constant 0
 eq
 push constant 0
 eq
-if-goto while-false-label35315
+if-goto while-false-label15214
 call Keyboard.keyPressed 0
 pop local 0
 push pointer 0
 call SquareGame.moveSquare 1
 pop temp 0
-goto while-true-label35314
-label while-false-label35315
+goto while-true-label15213
+label while-false-label15214
 push local 0
 push constant 81
 eq
 push constant 0
 eq
-if-goto else-label35317
+if-goto else-label15216
 push constant 0
 not
 pop local 1
-goto if-end-label35316
-label else-label35317
-label if-end-label35316
+goto if-end-label15215
+label else-label15216
+label if-end-label15215
 push local 0
 push constant 90
 eq
 push constant 0
 eq
-if-goto else-label35319
+if-goto else-label15218
 push this 0
 call Square.decSize 1
 pop temp 0
-goto if-end-label35318
-label else-label35319
-label if-end-label35318
+goto if-end-label15217
+label else-label15218
+label if-end-label15217
 push local 0
 push constant 88
 eq
 push constant 0
 eq
-if-goto else-label35321
+if-goto else-label15220
 push this 0
 call Square.incSize 1
 pop temp 0
-goto if-end-label35320
-label else-label35321
-label if-end-label35320
+goto if-end-label15219
+label else-label15220
+label if-end-label15219
 push local 0
 push constant 131
 eq
 push constant 0
 eq
-if-goto else-label35323
+if-goto else-label15222
 push constant 1
 pop this 1
-goto if-end-label35322
-label else-label35323
-label if-end-label35322
+goto if-end-label15221
+label else-label15222
+label if-end-label15221
 push local 0
 push constant 133
 eq
 push constant 0
 eq
-if-goto else-label35325
+if-goto else-label15224
 push constant 2
 pop this 1
-goto if-end-label35324
-label else-label35325
-label if-end-label35324
+goto if-end-label15223
+label else-label15224
+label if-end-label15223
 push local 0
 push constant 130
 eq
 push constant 0
 eq
-if-goto else-label35327
+if-goto else-label15226
 push constant 3
 pop this 1
-goto if-end-label35326
-label else-label35327
-label if-end-label35326
+goto if-end-label15225
+label else-label15226
+label if-end-label15225
 push local 0
 push constant 132
 eq
 push constant 0
 eq
-if-goto else-label35329
+if-goto else-label15228
 push constant 4
 pop this 1
-goto if-end-label35328
-label else-label35329
-label if-end-label35328
-label while-true-label35330
+goto if-end-label15227
+label else-label15228
+label if-end-label15227
+label while-true-label15229
 push local 0
 push constant 0
 eq
 not
 push constant 0
 eq
-if-goto while-false-label35331
+if-goto while-false-label15230
 call Keyboard.keyPressed 0
 pop local 0
 push pointer 0
 call SquareGame.moveSquare 1
 pop temp 0
-goto while-true-label35330
-label while-false-label35331
-goto while-true-label35312
-label while-false-label35313
+goto while-true-label15229
+label while-false-label15230
+goto while-true-label15211
+label while-false-label15212
 push constant 0
 return

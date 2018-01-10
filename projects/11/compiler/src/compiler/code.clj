@@ -256,14 +256,13 @@
 (defn parse-subroutineDec [tree]
   "Takes a tree representing a subroutineDec and retruns a map of its fields"
   (let [nodes (:value tree)
-        body (drop 1 (drop-last (:value (nth nodes 6)))) ; removes { and }]
-        vars (vars-from body)]
+        body (drop 1 (drop-last (:value (nth nodes 6))))] ; removes { and }]
     {:func-type (:value (nth nodes 0))
      :ret-type (:value (nth nodes 1))
      :func-name (:value (nth nodes 2))
      :params (parameters (nth nodes 4))
      :body body
-     :vars vars
+     :vars (vars-from body)
      :statements (:value (first (filter #(= "statements" (:type %)) body)))
      }))
 
@@ -374,20 +373,20 @@
 (deftest refactor-vm
   "Compares reference vm files to new compilation to support refactoring"
   (let [test-programs [
-                   {:dir "Seven/" :ref-files ["Main.vm"]}
-                   {:dir "ConvertToBin/" :ref-files ["Main.vm"]}
-                   {:dir "Square/" :ref-files ["Main.vm" "Square.vm" "SquareGame.vm"]}
-                   {:dir "Average/" :ref-files ["Main.vm"]}
-                   {:dir "Pong/" :ref-files ["Main.vm" "Bat.vm" "Ball.vm" "PongGame.vm"]}
-                   {:dir "ComplexArrays/" :ref-files ["Main.vm"]}]
+                       {:dir "Seven/" :ref-files ["Main.vm"]}
+                       {:dir "ConvertToBin/" :ref-files ["Main.vm"]}
+                       {:dir "Square/" :ref-files ["Main.vm" "Square.vm" "SquareGame.vm"]}
+                       {:dir "Average/" :ref-files ["Main.vm"]}
+                       {:dir "Pong/" :ref-files ["Main.vm" "Bat.vm" "Ball.vm" "PongGame.vm"]}
+                       {:dir "ComplexArrays/" :ref-files ["Main.vm"]}]
         gensym-words #{"if-end-label" "else-label" "while-true-label" "while-false-label"}
         is-digit? #(<= (int \0) (int %) (int \9))
         remove-end-digits (fn [word] (apply str (take-while #(not (is-digit? %)) word)))
         word-cmp? (fn [[w1 w2]] (or (= w1 w2)
-                                  (let [w1 (remove-end-digits w1)
-                                        w2 (remove-end-digits w2)]
-                                    (and (= w1 w2)
-                                         (every? #(contains? gensym-words %) [w1 w2])))))
+                                    (let [w1 (remove-end-digits w1)
+                                          w2 (remove-end-digits w2)]
+                                      (and (= w1 w2)
+                                           (every? #(contains? gensym-words %) [w1 w2])))))
         line-cmp? (fn [l1 l2] (let [ws1 (str/split l1 #"\s+")
                                     ws2 (str/split l1 #"\s+")]
                                 (every? word-cmp? (partition 2 (interleave ws1 ws2))))) ]

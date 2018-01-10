@@ -17,11 +17,11 @@ function Main.convert 3
 push constant 0
 not
 pop local 2
-label while-true-label35214
+label while-true-label15101
 push local 2
 push constant 0
 eq
-if-goto while-false-label35215
+if-goto while-false-label15102
 push local 1
 push constant 1
 add
@@ -35,7 +35,7 @@ gt
 not
 push constant 0
 eq
-if-goto else-label35217
+if-goto else-label15104
 push argument 0
 push local 0
 and
@@ -44,29 +44,29 @@ eq
 not
 push constant 0
 eq
-if-goto else-label35219
+if-goto else-label15106
 push constant 8000
 push local 1
 add
 push constant 1
 call Memory.poke 2
 pop temp 0
-goto if-end-label35218
-label else-label35219
+goto if-end-label15105
+label else-label15106
 push constant 8000
 push local 1
 add
 push constant 0
 call Memory.poke 2
 pop temp 0
-label if-end-label35218
-goto if-end-label35216
-label else-label35217
+label if-end-label15105
+goto if-end-label15103
+label else-label15104
 push constant 0
 pop local 2
-label if-end-label35216
-goto while-true-label35214
-label while-false-label35215
+label if-end-label15103
+goto while-true-label15101
+label while-false-label15102
 push constant 0
 return
 function Main.nextMask 0
@@ -75,24 +75,24 @@ push constant 0
 eq
 push constant 0
 eq
-if-goto else-label35221
+if-goto else-label15108
 push constant 1
 return
-goto if-end-label35220
-label else-label35221
+goto if-end-label15107
+label else-label15108
 push argument 0
 push constant 2
 call Math.multiply 2
 return
-label if-end-label35220
+label if-end-label15107
 function Main.fillMemory 0
-label while-true-label35222
+label while-true-label15109
 push argument 1
 push constant 0
 gt
 push constant 0
 eq
-if-goto while-false-label35223
+if-goto while-false-label15110
 push argument 0
 push argument 2
 call Memory.poke 2
@@ -105,7 +105,7 @@ push argument 0
 push constant 1
 add
 pop argument 0
-goto while-true-label35222
-label while-false-label35223
+goto while-true-label15109
+label while-false-label15110
 push constant 0
 return
