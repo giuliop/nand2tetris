@@ -15,26 +15,38 @@ class String {
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        var int a;
+        let a = Memory.alloc(maxLength + 2);
+        let a[0] = maxLength;   // the max length
+        let a[1] = 0;           // the actual length
+        return a;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        do Memory.deAlloc(this);
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return this[1];
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        retutn this[j+2];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let this[j+2] = c;
+        return
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        if (this[1] < this [0])
     }
 
     /** Erases the last character from this string. */
