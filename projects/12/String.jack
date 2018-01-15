@@ -16,6 +16,9 @@ class String {
      *  and initial length of 0. */
     constructor String new(int maxLength) {
         var int a;
+        if (maxLength < 0) {
+            Sys.error(14);
+        }
         let a = Memory.alloc(maxLength + 2);
         let a[0] = maxLength;   // the max length
         let a[1] = 0;           // the actual length
@@ -35,11 +38,17 @@ class String {
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
-        retutn this[j+2];
+        if ((j > (this[1] - 1) | (j < 0)) {
+            do Sys.error(15);
+        }
+        return this[j+2];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        if ((j > (this[1] - 1) | (j < 0)) {
+            do Sys.error(15);
+        }
         let this[j+2] = c;
         return
     }
