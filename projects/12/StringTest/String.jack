@@ -1,0 +1,154 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/String.jack
+
+/**
+ * Represents character strings. In addition for constructing and disposing
+ * strings, the class features methods for getting and setting individual
+ * characters of the string, for erasing the string's last character,
+ * for appending a character to the string's end, and more typical
+ * string-oriented operations.
+ */
+class String {
+    field int maxLen, len;
+    field Array chars;
+
+    /** constructs a new empty string with a maximum length of maxLength
+     *  and initial length of 0. */
+    constructor String new(int maxLength) {
+        if (maxLength < 0) {
+            do Sys.error(14);
+        }
+        let maxLen = maxLength;
+        let len = 0;
+        if (maxLength > 0) {
+            let chars = Array.new(maxLen);
+        }
+        return this;
+    }
+
+    /** Disposes this string. */
+    method void dispose() {
+        if (maxLen > 0) {
+            do chars.dispose();
+        }
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    /** Returns the current length of this string. */
+    method int length() {
+        return len;
+    }
+
+    /** Returns the character at the j-th location of this string. */
+    method char charAt(int j) {
+        if ((j > (len - 1)) | (j < 0)) {
+            do Sys.error(15);
+        }
+        return chars[j];
+    }
+
+    /** Sets the character at the j-th location of this string to c. */
+    method void setCharAt(int j, char c) {
+        if ((j > (len - 1)) | (j < 0)) {
+            do Sys.error(15);
+        }
+        let chars[j] = c;
+        return;
+    }
+
+    /** Appends c to this string's end and returns this string. */
+    method String appendChar(char c) {
+        if (len < maxLen) {
+            let chars[len] = c;
+            let len = len + 1;
+        } else {
+            do Sys.error(17);
+        }
+        return this;
+    }
+
+    /** Erases the last character from this string. */
+    method void eraseLastChar() {
+        if (len = 0) {
+            do Sys.error(18);
+        }
+        let len = len - 1;
+        return;
+    }
+
+    /** Returns the integer value of this string, 
+     *  until a non-digit character is detected. */
+    method int intValue() {
+        var int j, sign, num, factor;
+        if ((len > 0) & (chars[0] = 45)) {  // 45 is '-'
+            let sign = -1;
+            let j = 1;
+        } else {
+            let sign = 1;
+            let j = 0;
+        }
+        while (j < len) {
+            if ((chars[j] > 47) & (chars[j] < 58)) {  // if is digit
+                let chars[j] = chars[j] - 48;
+            } else {
+                let len = j;
+            }
+            let j = j + 1;
+        }
+        let num = 0;
+        let factor = 1;
+        if (sign = -1) {
+            let j = 1;
+        } else {
+            let j = 0;
+        }
+        while (len > j) {
+            let num = num + (chars[len-1] * factor);
+            let factor = factor * 10;
+            let len = len - 1;
+        }
+        return num * sign;
+    }
+
+    /** Sets this string to hold a representation of the given value. */
+    method void setInt(int val) {
+        let len = 0;
+        if (val < 0) {
+            let chars[0] = 45;   // - sign
+            let len = len + 1;
+            let val = -val;
+        }
+        do setIntHelper(val);
+        return;
+        }
+
+    /** Helper function for setInt. */
+    method void setIntHelper(int val) {
+        var int lastDigit;
+        let lastDigit = (val - ((val / 10) * 10)) + 48;
+        if (val > 9) {
+            do setIntHelper(val / 10);
+        }
+        let chars[len] = lastDigit;
+        let len = len + 1;
+        return;
+    }
+
+    /** Returns the new line character. */
+    function char newLine() {
+        return 128;
+    }
+
+    /** Returns the backspace character. */
+    function char backSpace() {
+        return 129;
+    }
+
+    /** Returns the double quote (") character. */
+    function char doubleQuote() {
+        return 34;
+    }
+}

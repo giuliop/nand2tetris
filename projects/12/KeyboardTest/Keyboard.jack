@@ -8,14 +8,14 @@
  */
 class Keyboard {
     static int keyMem, backspace, newline;
-    static Array buffer;
+    static s buffer;
 
     /** Initializes the keyboard. */
     function void init() {
         let keyMem = 24576;
         let newline = 128;
         let backspace = 129;
-        let buffer = Array.new(250);
+        let buffer = String.new(250);
         return;
     } 
 
@@ -73,30 +73,29 @@ class Keyboard {
      */
     function String readLine(String message) {
         var String s;
-        var int key, len, j;
+        var int key, j;
         let key = 0;
-        let len = 0;
         let j = 0;
+        let buffer[1]= 0;
         do Output.printString(message);
         while (true) {
             let key = Keyboard.readChar();
-            if (key = newline) {
+            if ((key = newline) | (buffer.length() = buffer[0])) {
                 let s = String.new(len);
-                while (j < len) {
-                    do s.appendChar(buffer[j]);
+                while (j < buffer.length()) {
+                    do s.appendChar(buffer.charAt[j]);
                     let j = j + 1;
                 }
                 do Output.println();
                 return s;
             }
             if (key = backspace) {
-                if (len > 0) {
+                if (buffer.length() > 0) {
                     do Output.backSpace();
-                    let len = len - 1;
+                    let buffer.eraseLastChar();
                 }
             } else {
-                let buffer[len] = key;
-                let len = len + 1;
+                do buffer.appendChar(key);
             }
         }
         return "";
@@ -110,52 +109,23 @@ class Keyboard {
      * entered text is detected). Also handles user backspaces. 
      */
     function int readInt(String message) {
-        var int key, j, len, factor, sign;
+        var int key;
         let key = 0;
-        let len = 0;
+        let buffer[1]= 0;
         do Output.printString(message);
         while (true) {
             let key = Keyboard.readChar();
-            if (key = newline) {
-                let j = 0;
-                if ((len > 0) & (buffer[j] = 45)) {  // 45 is '-'
-                    let sign = -1;
-                    let j = 1;
-                } else {
-                    let sign = 1;
-                }
-                while (j < len) {
-                    let key = buffer[j];
-                    if ((key > 47) & (key < 58)) {  // if is digit
-                        let buffer[j] = buffer[j] - 48;
-                    } else {
-                        let len = j;
-                    }
-                    let j = j + 1;
-                }
-                let key = 0;
-                let factor = 1;
-                if (sign = -1) {
-                    let j = 1;
-                } else {
-                    let j = 0;
-                }
-                while (len > j) {
-                    let key = key + (buffer[len-1] * factor);
-                    let factor = factor * 10;
-                    let len = len - 1;
-                }
+            if ((key = newline) | (buffer.length() = 6)) {  // max length is sign and 5 digits
                 do Output.println();
-                return key * sign;
+                return buffer.intValue();
             }
             if (key = backspace) {
-                if (len > 0) {
+                if (buffer.length() > 0) {
                     do Output.backSpace();
-                    let len = len - 1;
+                    let buffer.eraseLastChar();
                 }
             } else {
-                let buffer[len] = key;
-                let len = len + 1;
+                do buffer.appendChar(key);
             }
         }
     return 0;
