@@ -192,6 +192,16 @@ label WHILE_END0
 push local 0
 return
 function Math.divide 1
+push argument 1
+push constant 0
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 3
+call Sys.error 1
+pop temp 0
+label IF_FALSE0
 push argument 0
 call Math.abs 1
 push argument 1
@@ -213,13 +223,13 @@ push constant 0
 lt
 and
 or
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
 push local 0
 neg
 pop local 0
-label IF_FALSE0
+label IF_FALSE1
 push local 0
 return
 function Math.dividePositive 2
@@ -285,6 +295,16 @@ add
 return
 label IF_END2
 function Math.sqrt 3
+push argument 0
+push constant 0
+lt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 4
+call Sys.error 1
+pop temp 0
+label IF_FALSE0
 push constant 0
 pop local 0
 push constant 7
@@ -320,9 +340,9 @@ push local 2
 push constant 0
 gt
 and
-if-goto IF_TRUE0
-goto IF_FALSE0
-label IF_TRUE0
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
 push local 0
 push local 1
 push static 1
@@ -331,7 +351,7 @@ pop pointer 1
 push that 0
 add
 pop local 0
-label IF_FALSE0
+label IF_FALSE1
 push local 1
 push constant 1
 sub
