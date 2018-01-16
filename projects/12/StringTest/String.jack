@@ -115,25 +115,32 @@ class String {
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var String inverseDigits;
+        var int j;
         let len = 0;
+        if (val = 0) {
+            do appendChar(48);
+            return;
+        }
         if (val < 0) {
-            let chars[0] = 45;   // - sign
-            let len = len + 1;
+            do appendChar(45);  // - sign
             let val = -val;
         }
-        do setIntHelper(val);
-        return;
+        let inverseDigits = String.new(6);
+        while (val > 0) {
+            do inverseDigits.appendChar((val - ((val / 10) * 10)) + 48);
+            let val = val / 10;
         }
-
-    /** Helper function for setInt. */
-    method void setIntHelper(int val) {
-        var int lastDigit;
-        let lastDigit = (val - ((val / 10) * 10)) + 48;
-        if (val > 9) {
-            do setIntHelper(val / 10);
+        let j = inverseDigits.length();
+        while (j > 0) {
+            if (len = maxLen) {
+                do Sys.error(19);
+            } else {
+                do appendChar(inverseDigits.charAt(j-1));
+                let j = j - 1;
+            }
         }
-        let chars[len] = lastDigit;
-        let len = len + 1;
+        do inverseDigits.dispose();
         return;
     }
 
