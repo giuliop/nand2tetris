@@ -19,12 +19,15 @@ class Output {
     // Character map for displaying characters
     static Array charMaps; 
     static int cursorI, cursorJ;
+    static int maskLeft8bit, maskRight8bit;
 
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
         do Output.initMap();
         let cursorI = 0;
         let cursorJ = 0;
+        let maskLeft8bit = -256;            // 1111111100000000
+        let maskRight8bit = 255;            // 0000000011111111
         return;
     }
 
@@ -196,13 +199,20 @@ class Output {
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
         var Array map;
-        var int i, pixels, mask, word;
-        let mask = -256;            // 1111111100000000
+        var int i, pixels, mask, word, factor;
         let map = Output.getMap(c);
         let i = 0;
+        if (((cursorJ / 2) * 2) = cursorJ) {
+            let mask = maskLeft8bit;
+            let factor = 1;
+        } else {
+            let mask = maskRight8bit;
+            let factor = 256;
+        } 
         while (i < 11) {
-            let word = 16384 + ((cursorI + i) * 32) + (cursorJ / 2);
+            let word = 16384 + (((cursorI * 11) + i) * 32) + (cursorJ / 2);
             let pixels = map[i];
+            let pixels = pixels * factor;
             let pixels = (Memory.peek(word) & mask) + pixels;
             do Memory.poke(word, pixels);
             let i = i + 1;
@@ -239,7 +249,10 @@ class Output {
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printInt(int i) {
-        do Output.printChar(i + 48);
+        var String s;
+        let s = String.new(6);
+        do s.setInt(i);
+        do Output.printString(s);
         return;
     }
 

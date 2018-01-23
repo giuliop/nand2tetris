@@ -26,16 +26,16 @@ class Main {
         do Output.printString("0123456789");
         do Output.println();
         
-        /*do Output.printString("ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz");*/
-        /*do Output.println();*/
+        do Output.printString("ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz");
+        do Output.println();
         
-        /*do Output.printString("!#$%&'()*+,-./:;<=>?@[\]^_`{|}~");*/
-        /*do Output.printString(s);*/
-        /*do Output.println();*/
+        do Output.printString("!#$%&'()*+,-./:;<=>?@[\]^_`{|}~");
+        do Output.printString(s);
+        do Output.println();
         
-        /*do Output.printInt(-12345);*/
-        /*do Output.backSpace();*/
-        /*do Output.printInt(6789);*/
+        do Output.printInt(-12345);
+        do Output.backSpace();
+        do Output.printInt(6789);
         
         return;
     }
