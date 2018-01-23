@@ -202,18 +202,18 @@ class Output {
         var int i, pixels, mask, word, factor;
         let map = Output.getMap(c);
         let i = 0;
-        if (((cursorJ / 2) * 2) = cursorJ) {
-            let mask = maskLeft8bit;
-            let factor = 1;
-        } else {
+        if (cursorJ & 1) {              // if cursorJ odd
             let mask = maskRight8bit;
             let factor = 256;
+        } else {
+            let mask = maskLeft8bit;
+            let factor = 1;
         } 
         while (i < 11) {
             let word = 16384 + (((cursorI * 11) + i) * 32) + (cursorJ / 2);
             let pixels = map[i];
             let pixels = pixels * factor;
-            let pixels = (Memory.peek(word) & mask) + pixels;
+            let pixels = (Memory.peek(word) & mask) | pixels;
             do Memory.poke(word, pixels);
             let i = i + 1;
         }

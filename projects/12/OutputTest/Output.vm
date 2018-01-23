@@ -1523,24 +1523,20 @@ pop local 0
 push constant 0
 pop local 1
 push static 2
-push constant 2
-call Math.divide 2
-push constant 2
-call Math.multiply 2
-push static 2
-eq
+push constant 1
+and
 if-goto IF_TRUE0
 goto IF_FALSE0
 label IF_TRUE0
-push static 3
-pop local 3
-push constant 1
-pop local 5
-goto IF_END0
-label IF_FALSE0
 push static 4
 pop local 3
 push constant 256
+pop local 5
+goto IF_END0
+label IF_FALSE0
+push static 3
+pop local 3
+push constant 1
 pop local 5
 label IF_END0
 label WHILE_EXP0
@@ -1578,7 +1574,7 @@ call Memory.peek 1
 push local 3
 and
 push local 2
-add
+or
 pop local 2
 push local 4
 push local 2
